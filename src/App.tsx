@@ -1,0 +1,119 @@
+import { useState, useEffect } from 'react';
+import { DateSelector } from './app/components/DateSelector';
+import { BottomNav, type NavSection } from './app/components/BottomNav';
+import { MapView } from './app/components/MapView';
+import { EventsList } from './app/components/EventsList';
+import { ProfileView } from './app/components/ProfileView';
+import { EventDetailModal } from './app/components/EventDetailModal';
+import { mockEvents } from './app/data/mockEvents';
+import type { Event } from './app/types/event';
+
+
+
+export default function App() {
+  // Set today's date as default
+  const getTodayString = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+  
+  const [selectedDate, setSelectedDate] = useState(getTodayString());
+  const [activeSection, setActiveSection] = useState<NavSection>('home');
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+
+  // Load favorites from localStorage on mount
+  useEffect(() => {
+    const storedFavorites = localStorage.getItem('favorites');
+    if (storedFavorites) {
+      setFavorites(new Set(JSON.parse(storedFavorites)));
+    }
+  }, []);
+
+  // Save favorites to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('favorites', JSON.stringify(Array.from(favorites)));
+  }, [favorites]);
+
+  const toggleFavorite = (eventId: string) => {
+    setFavorites((prev) => {
+      const newFavorites = new Set(prev);
+      if (newFavorites.has(eventId)) {
+        newFavorites.delete(eventId);
+      } else {
+        newFavorites.add(eventId);
+      }
+      return newFavorites;
+    });
+  };
+
+  const filteredEvents = mockEvents.filter((event) => event.date === selectedDate);
+  const favoriteEvents = mockEvents.filter((event) => favorites.has(event.id));
+
+  const handleEventClick = (event: Event) => {
+    setSelectedEvent(event);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedEvent(null);
+  };
+
+  const [navigationEvent, setNavigationEvent] = useState<Event | null>(null);
+
+  const handleNavigate = (event: Event) => {
+    setActiveSection('home');   // torna alla mappa
+    setNavigationEvent(event);  // trigger percorso
+    setSelectedEvent(null);     // chiude la modal
+  };
+
+
+  return (
+    <div className="h-screen flex flex-col bg-gray-50">
+      {/* Date Selector - only for home */}
+      {activeSection === 'home' && (
+        <DateSelector selectedDate={selectedDate} onDateChange={setSelectedDate} />
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden">
+        {activeSection === 'home' && (
+          <MapView events={filteredEvents} onEventClick={handleEventClick} 
+          navigationEvent={navigationEvent}/>
+        )}
+        
+        {activeSection === 'events' && (
+          <EventsList
+            events={mockEvents}
+            favorites={favorites}
+            onToggleFavorite={toggleFavorite}
+            onEventClick={handleEventClick}
+            showFilters={true}
+          />
+        )}
+        
+        {activeSection === 'profile' && (
+          <ProfileView
+            favoriteEvents={favoriteEvents}
+            favorites={favorites}
+            onToggleFavorite={toggleFavorite}
+            onEventClick={handleEventClick}
+          />
+        )}
+      </div>
+
+      {/* Bottom Navigation */}
+      <BottomNav activeSection={activeSection} onSectionChange={setActiveSection} />
+
+      {/* Event Detail Modal */}
+      {selectedEvent && (
+        <EventDetailModal
+          event={selectedEvent}
+          isFavorite={favorites.has(selectedEvent.id)}
+          onClose={handleCloseModal}
+          onToggleFavorite={toggleFavorite}
+          onNavigate={handleNavigate}
+        />
+      )}
+    </div>
+  );
+}

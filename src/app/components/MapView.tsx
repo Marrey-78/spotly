@@ -25,6 +25,28 @@ const containerStyle = {
   height: '100%',
 };
 
+const lastPositionRef = useRef<google.maps.LatLngLiteral | null>(null);
+
+const distanceInMeters = (
+  a: google.maps.LatLngLiteral,
+  b: google.maps.LatLngLiteral
+): number => {
+  const R = 6371000; // raggio Terra in metri
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+
+  const x =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) *
+      Math.cos(lat2) *
+      Math.sin(dLng / 2) ** 2;
+
+  return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+};
+
 
 const defaultCenter = { lat: 45.4642, lng: 9.19 };
 
@@ -32,9 +54,11 @@ interface MapViewProps {
   events: Event[];
   onEventClick: (event: Event) => void;
   navigationEvent?: Event | null;
+  travelMode: google.maps.TravelMode | null;
+  onCancelNavigation: () => void;
 }
 
-export function MapView({ events, onEventClick, navigationEvent }: MapViewProps) {
+export function MapView({ events, onEventClick, navigationEvent, travelMode, onCancelNavigation }: MapViewProps) {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
   });
@@ -57,30 +81,91 @@ export function MapView({ events, onEventClick, navigationEvent }: MapViewProps)
     mapRef.current = map;
   }, []);
 
-    /* ----------PERCORSO ----------*/
+  /* -------ETA -------*/
+  const [eta, setEta] = useState<string | null>(null);
+
+  /* --- Ricalcolo percorso --- */
+  const [userPosition, setUserPosition] = useState<google.maps.LatLngLiteral | null>(null);
+ 
+
+  /* ----------PERCORSO ----------*/
+  useEffect(() => {
+  if (!navigator.geolocation) return;
+
+  const watchId = navigator.geolocation.watchPosition(
+    (pos) => {
+      const newPosition = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+      };
+
+      // prima posizione → sempre accettata
+      if (!lastPositionRef.current) {
+        lastPositionRef.current = newPosition;
+        setUserPosition(newPosition);
+        return;
+      }
+
+      const movedMeters = distanceInMeters(
+        lastPositionRef.current,
+        newPosition
+      );
+
+      // ricalcolo solo se > 20 metri
+      if (movedMeters >= 20) {
+        lastPositionRef.current = newPosition;
+        setUserPosition(newPosition);
+      }
+    },
+    (err) => {
+      console.error('Errore geolocalizzazione', err);
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 5000,
+      timeout: 10000,
+    }
+  );
+
+  return () => navigator.geolocation.clearWatch(watchId);
+}, []);
 
 
   useEffect(() => {
-    if (!navigationEvent || !position) return;
+    if (!navigationEvent || !travelMode || !userPosition) return;
 
     const service = new google.maps.DirectionsService();
 
     service.route(
       {
-        origin: position,
+        origin: userPosition,
         destination: {
           lat: navigationEvent.latitude,
           lng: navigationEvent.longitude,
         },
-        travelMode: google.maps.TravelMode.DRIVING, // 🚗
+        travelMode,
       },
       (result, status) => {
         if (status === 'OK' && result) {
           setDirections(result);
+
+          const duration =
+            result.routes[0].legs[0].duration?.text;
+
+          setEta(duration ?? null);
         }
       }
     );
-  }, [navigationEvent, position]);
+  }, [navigationEvent, travelMode, userPosition]);
+
+
+  useEffect(() => {
+    if (!navigationEvent) {
+      setDirections(null);
+      setEta(null);
+    }
+  }, [navigationEvent]);
+
 
   /* ---------- MAP ACTIONS ---------- */
 
@@ -209,6 +294,17 @@ export function MapView({ events, onEventClick, navigationEvent }: MapViewProps)
             <div className="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg -translate-x-1/2 -translate-y-1/2" />
           </OverlayView>
         )}
+        {navigationEvent && (
+            <div className="absolute top-4 right-4 z-50">
+              <button
+                onClick={onCancelNavigation}
+                className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-red-700 transition"
+              >
+                ✕ Termina Navigazione
+              </button>
+            </div>
+          )}
+
 
         {/* 📌 EVENTS */}
         {events.map((event) => {
@@ -250,6 +346,11 @@ export function MapView({ events, onEventClick, navigationEvent }: MapViewProps)
             },
           }}
         />
+      )}
+      {eta && (
+        <div className="absolute top-4 left-4 z-50 bg-black/80 text-white px-4 py-2 rounded-lg">
+          ETA: {eta}
+        </div>
       )}
 
       </GoogleMap>

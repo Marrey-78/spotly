@@ -20,6 +20,9 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(getTodayString());
   const [activeSection, setActiveSection] = useState<NavSection>('home');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+    //Pop up
+  const [travelMode, setTravelMode] = useState<google.maps.TravelMode | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   // Load favorites from localStorage on mount
@@ -60,11 +63,20 @@ export default function App() {
 
   const [navigationEvent, setNavigationEvent] = useState<Event | null>(null);
 
-  const handleNavigate = (event: Event) => {
-    setActiveSection('home');   // torna alla mappa
-    setNavigationEvent(event);  // trigger percorso
-    setSelectedEvent(null);     // chiude la modal
+  const handleNavigate = (event: Event, mode: google.maps.TravelMode) => {
+    setActiveSection('home');
+    setNavigationEvent(event);
+    setTravelMode(mode);
+    setSelectedEvent(null);
   };
+
+  // Delete navigation 
+  const handleCancelNavigation = () => {
+    setNavigationEvent(null);
+    setTravelMode(null);
+  };
+
+
 
 
   return (
@@ -77,8 +89,13 @@ export default function App() {
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
         {activeSection === 'home' && (
-          <MapView events={filteredEvents} onEventClick={handleEventClick} 
-          navigationEvent={navigationEvent}/>
+          <MapView 
+            events={filteredEvents} 
+            onEventClick={handleEventClick} 
+            navigationEvent={navigationEvent}
+            travelMode={travelMode}
+            onCancelNavigation={handleCancelNavigation}
+            />
         )}
         
         {activeSection === 'events' && (

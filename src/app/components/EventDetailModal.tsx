@@ -1,13 +1,14 @@
 import { X, MapPin, Clock, Heart, Music, Theater, Film, Utensils, Calendar } from 'lucide-react';
 import type { Event } from '../types/event';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useState } from 'react';
 
 interface EventDetailModalProps {
   event: Event | null;
   isFavorite: boolean;
   onClose: () => void;
   onToggleFavorite: (eventId: string) => void;
-  onNavigate: (event: Event) => void;
+  onNavigate: (event: Event, mode: google.maps.TravelMode) => void;
 }
 
 export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite, onNavigate }: EventDetailModalProps) {
@@ -57,6 +58,10 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
       day: 'numeric' 
     });
   };
+
+  // Pop - up
+  const [showNavigationModal, setShowNavigationModal] = useState(false);
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -112,7 +117,7 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
 
               {/* 🧭 NAVIGAZIONE */}
               <button
-                onClick={() => onNavigate(event)}
+                onClick={() => setShowNavigationModal(true)}
                 className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md hover:bg-indigo-700 transition"
                 title="Naviga"
               >
@@ -168,6 +173,43 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
           </div>
         </div>
       </div>
+      {showNavigationModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center">
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={() => setShowNavigationModal(false)}
+            />
+        
+            <div className="relative bg-white rounded-xl p-6 w-72 shadow-xl">
+              <h3 className="text-lg font-semibold mb-4 text-center">
+                Come vuoi andare?
+              </h3>
+              
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    onNavigate(event, google.maps.TravelMode.WALKING);
+                    setShowNavigationModal(false);
+                  }}
+                  className="py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+                >
+                  🚶 A piedi
+                </button>
+                
+                <button
+                  onClick={() => {
+                    onNavigate(event, google.maps.TravelMode.DRIVING);
+                    setShowNavigationModal(false);
+                  }}
+                  className="py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                >
+                  🚗 In auto
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
     </div>
   );
 }

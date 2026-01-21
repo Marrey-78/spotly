@@ -1,8 +1,7 @@
 import {
   GoogleMap,
   useJsApiLoader,
-  OverlayView,
-  DirectionsRenderer,
+  OverlayView
 } from '@react-google-maps/api';
 import {
   MapPin,
@@ -19,6 +18,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { darkMapStyle } from '../maps/darkMapStyle';
 
 /* ---------- MAP CONFIG ---------- */
+
+const GOOGLE_LIBRARIES: (
+  | 'places'
+  | 'geometry'
+)[] = ['places', 'geometry'];
+
 
 const containerStyle = {
   width: '100%',
@@ -135,8 +140,10 @@ interface MapViewProps {
 export function MapView({ events, onEventClick, navigationEvent, travelMode, onCancelNavigation }: MapViewProps) {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    libraries: ['geometry'],
+    libraries: GOOGLE_LIBRARIES,
   });
+
+  const routePolylineRef = useRef<google.maps.Polyline | null>(null);
 
   const lastPositionRef = useRef<google.maps.LatLngLiteral | null>(null);
 
@@ -147,7 +154,6 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
   const setCardRef = (id: string) => (el: HTMLButtonElement | null) => {
     cardsRef.current[id] = el;
   };
-
 
   const [darkMode, setDarkMode] = useState(false);
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
@@ -194,11 +200,17 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
   // Rotazione marker
   const [heading, setHeading] = useState<number>(0);
 
-  // Zoom navigazione 
-  const [navigationZoom, setNavigationZoom] = useState<number | null>(null);
+  // Nascondo schede durante navigazione
+  const isNavigating = Boolean(navigationEvent);
+
 
   /* ----------PERCORSO ----------*/
   useEffect(() => {
+    if (!navigationEvent) {
+      lastPositionRef.current = null;
+      return;
+    }
+
     if (!navigator.geolocation) return;
 
     const watchId = navigator.geolocation.watchPosition(
@@ -291,7 +303,14 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
 
 
   useEffect(() => {
-    if (!navigationEvent || !travelMode || !userPosition) return;
+    if (!navigationEvent || !travelMode) return;
+    if (!userPosition) return;
+
+    // 🎯 zoom e centro immediato all'avvio navigazione
+    if (mapRef.current) {
+      mapRef.current.panTo(userPosition);
+      mapRef.current.setZoom(17);
+    }
 
     const service = new google.maps.DirectionsService();
 
@@ -305,16 +324,33 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
         travelMode,
       },
       (result, status) => {
+        if (!navigationEvent) return;
+
         if (status === 'OK' && result) {
-          setDirections(result);
-          
-          const polyline = new google.maps.Polyline({path: result.routes[0].overview_path});
-        
+          // 1️⃣ rimuove eventuale percorso precedente
+          if (routePolylineRef.current) {
+            routePolylineRef.current.setMap(null);
+            routePolylineRef.current = null;
+           } 
+
+          // 2️⃣ crea la polyline visibile
+          const polyline = new google.maps.Polyline({
+            path: result.routes[0].overview_path,
+            strokeColor: '#4f46e5',
+            strokeWeight: 5,
+          });
+
+          // 3️⃣ la attacca alla mappa
+          polyline.setMap(mapRef.current!);
+
+          // 4️⃣ salva la ref (VISIVA)
+          routePolylineRef.current = polyline;
+
+          // 5️⃣ salva anche per snap / off-route
           setRoutePolyline(polyline);
 
-          const duration =
-            result.routes[0].legs[0].duration?.text;
-
+          // 6️⃣ ETA
+          const duration = result.routes[0].legs[0].duration?.text;
           setEta(duration ?? null);
         }
       }
@@ -322,15 +358,23 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
   }, [navigationEvent, travelMode, userPosition]);
 
 
-  useEffect(() => {
-    if (!navigationEvent && mapRef.current) {
-      setDirections(null);
-      setRoutePolyline(null);
-      setEta(null);
-      mapRef.current.setZoom(position ? 14 : 12);
-      setNavigationZoom(null);
+useEffect(() => {
+  if (!navigationEvent) {
+    if (routePolylineRef.current) {
+      routePolylineRef.current.setMap(null);
+      routePolylineRef.current = null;
     }
-  }, [navigationEvent]);
+
+    setRoutePolyline(null);
+    setDirections(null);
+    setEta(null);
+    setSnappedPosition(null);
+    setHeading(0);
+    setActiveEventId(null);
+    lastPositionRef.current = null;
+  }
+}, [navigationEvent]);
+
 
 
   /* ---------- MAP ACTIONS ---------- */
@@ -479,7 +523,7 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
 
 
         {/* 📌 EVENTS */}
-        {events.map((event) => {
+        {!isNavigating && events.map((event) => {
           const Icon = getIcon(event.type);
           const color = getColor(event.type);
           const isActive = activeEventId === event.id;
@@ -507,18 +551,21 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
             </OverlayView>
           );
         })}
-        {directions && (
-        <DirectionsRenderer
-          directions={directions}
-          options={{
-            suppressMarkers: true,
-            polylineOptions: {
-              strokeColor: '#4f46e5',
-              strokeWeight: 5,
-            },
-          }}
-        />
-      )}
+        {isNavigating && navigationEvent && (
+          <OverlayView
+            position={{
+              lat: navigationEvent.latitude,
+              lng: navigationEvent.longitude,
+            }}
+            mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+          >
+            <div className="relative -translate-x-1/2 -translate-y-1/2">
+              <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-xl border-4 border-white">
+                📍
+              </div>
+            </div>
+          </OverlayView>
+        )}
       {eta && (
         <div className="absolute top-4 left-4 z-50 bg-black/80 text-white px-4 py-2 rounded-lg">
           ETA: {eta}
@@ -528,65 +575,67 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
       </GoogleMap>
 
       {/* 🎴 CARDS */}
-      <div className="absolute bottom-[88px] left-0 right-0 z-20 pointer-events-none">
-        <div className="px-4">
-          <div className="flex gap-4 overflow-x-auto pb-4 pointer-events-auto scrollbar-hide">
-            {events.map((event) => {
-              const Icon = getIcon(event.type);
-              const color = getColor(event.type);
-              const isActive = activeEventId === event.id;
+      {!isNavigating && (
+        <div className="absolute bottom-[88px] left-0 right-0 z-20 pointer-events-none">
+          <div className="px-4">
+            <div className="flex gap-4 overflow-x-auto pb-4 pointer-events-auto scrollbar-hide">
+              {events.map((event) => {
+                const Icon = getIcon(event.type);
+                const color = getColor(event.type);
+                const isActive = activeEventId === event.id;
 
-              return (
-                <button
-                  key={event.id}
-                  ref={setCardRef(event.id)}
-                  onClick={() => handleCardClick(event)}
-                  className={`flex-shrink-0 w-72 rounded-2xl overflow-hidden shadow-xl transition-all ${
-                    isActive
-                      ? 'scale-105 ring-2 ring-indigo-600 bg-white'
-                      : 'bg-white/95'
-                  }`}
-                >
-                  <div className="relative h-36">
-                    <img
-                      src={event.image}
-                      alt={event.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div
-                      className={`absolute top-3 right-3 ${color} text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1`}
-                    >
-                      <Icon className="w-3 h-3" />
-                      {getTypeLabel(event.type)}
-                    </div>
-                  </div>
-
-                  <div className="p-4 text-left">
-                    <h3 className="font-semibold text-gray-900 text-sm mb-1 truncate">
-                      {event.title}
-                    </h3>
-
-                    <div className="flex items-center gap-1 text-gray-600 text-xs mb-2">
-                      <MapPinIcon className="w-3 h-3" />
-                      <span className="truncate">{event.venue}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-indigo-600 text-xs font-medium">
-                        <Clock className="w-3 h-3" />
-                        {event.time}
-                      </div>
-                      <div className="text-sm font-bold text-gray-900">
-                        {event.price}
+                return (
+                  <button
+                    key={event.id}
+                    ref={setCardRef(event.id)}
+                    onClick={() => handleCardClick(event)}
+                    className={`flex-shrink-0 w-72 rounded-2xl overflow-hidden shadow-xl transition-all ${
+                      isActive
+                        ? 'scale-105 ring-2 ring-indigo-600 bg-white'
+                        : 'bg-white/95'
+                    }`}
+                  >
+                    <div className="relative h-36">
+                      <img
+                        src={event.image}
+                        alt={event.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div
+                        className={`absolute top-3 right-3 ${color} text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1`}
+                      >
+                        <Icon className="w-3 h-3" />
+                        {getTypeLabel(event.type)}
                       </div>
                     </div>
-                  </div>
-                </button>
-              );
-            })}
+
+                    <div className="p-4 text-left">
+                      <h3 className="font-semibold text-gray-900 text-sm mb-1 truncate">
+                        {event.title}
+                      </h3>
+
+                      <div className="flex items-center gap-1 text-gray-600 text-xs mb-2">
+                        <MapPinIcon className="w-3 h-3" />
+                        <span className="truncate">{event.venue}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1 text-indigo-600 text-xs font-medium">
+                          <Clock className="w-3 h-3" />
+                          {event.time}
+                        </div>
+                        <div className="text-sm font-bold text-gray-900">
+                          {event.price}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* 🌙 DARK MODE */}
       <button

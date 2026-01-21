@@ -25,7 +25,6 @@ const containerStyle = {
   height: '100%',
 };
 
-const lastPositionRef = useRef<google.maps.LatLngLiteral | null>(null);
 
 const distanceInMeters = (
   a: google.maps.LatLngLiteral,
@@ -47,6 +46,81 @@ const distanceInMeters = (
   return 2 * R * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
 };
 
+const isOffRoute = (
+  position: google.maps.LatLngLiteral,
+  polyline: google.maps.Polyline | null
+): boolean => {
+  if (!polyline) return false;
+
+  const point = new google.maps.LatLng(position.lat, position.lng);
+
+  return !google.maps.geometry.poly.isLocationOnEdge(
+    point,
+    polyline,
+    0.0002 // ≈ 20m
+  );
+};
+
+
+const getClosestPointOnRoute = (
+  position: google.maps.LatLngLiteral,
+  polyline: google.maps.Polyline
+): google.maps.LatLngLiteral => {
+  const path = polyline.getPath();
+  let minDistance = Infinity;
+  let closestPoint = path.getAt(0);
+
+  const point = new google.maps.LatLng(position.lat, position.lng);
+
+  for (let i = 0; i < path.getLength(); i++) {
+    const candidate = path.getAt(i);
+    const distance =
+      google.maps.geometry.spherical.computeDistanceBetween(
+        point,
+        candidate
+      );
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestPoint = candidate;
+    }
+  }
+
+  return {
+    lat: closestPoint.lat(),
+    lng: closestPoint.lng(),
+  };
+};
+
+// Rotazione marker
+const calculateBearing = (
+  from: google.maps.LatLngLiteral,
+  to: google.maps.LatLngLiteral
+): number => {
+  const lat1 = (from.lat * Math.PI) / 180;
+  const lat2 = (to.lat * Math.PI) / 180;
+  const dLng = ((to.lng - from.lng) * Math.PI) / 180;
+
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+
+  const bearing = (Math.atan2(y, x) * 180) / Math.PI;
+  return (bearing + 360) % 360; // 0–360
+};
+
+// zoom navigazione
+const getZoomFromSpeed = (speed: number): number => {
+  // speed in m/s
+  if (speed < 1) return 18;       // fermo / a piedi
+  if (speed < 5) return 17;       // camminata veloce
+  if (speed < 10) return 16;      // bici / traffico lento
+  if (speed < 20) return 15;      // città
+  return 14;                      // veloce / extraurbano
+};
+
+
 
 const defaultCenter = { lat: 45.4642, lng: 9.19 };
 
@@ -61,7 +135,10 @@ interface MapViewProps {
 export function MapView({ events, onEventClick, navigationEvent, travelMode, onCancelNavigation }: MapViewProps) {
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries: ['geometry'],
   });
+
+  const lastPositionRef = useRef<google.maps.LatLngLiteral | null>(null);
 
   const { position } = useUserLocation();
   const mapRef = useRef<google.maps.Map | null>(null);
@@ -74,8 +151,7 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
 
   const [darkMode, setDarkMode] = useState(false);
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
-  const [directions, setDirections] =
-  useState<google.maps.DirectionsResult | null>(null);
+  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
 
   const onLoad = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
@@ -86,49 +162,132 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
 
   /* --- Ricalcolo percorso --- */
   const [userPosition, setUserPosition] = useState<google.maps.LatLngLiteral | null>(null);
- 
+  const [routePolyline, setRoutePolyline] =   useState<google.maps.Polyline | null>(null);
+
+  /* --- snap guida ---*/
+  const [snappedPosition, setSnappedPosition] = useState<google.maps.LatLngLiteral | null>(null);
+
+  // Movimento fluido
+  const animateMarker = (
+    from: google.maps.LatLngLiteral,
+    to: google.maps.LatLngLiteral,
+    duration = 300
+  ) => {
+    const start = performance.now();
+
+    const animate = (time: number) => {
+      const progress = Math.min((time - start) / duration, 1);
+
+      setSnappedPosition({
+        lat: from.lat + (to.lat - from.lat) * progress,
+        lng: from.lng + (to.lng - from.lng) * progress,
+      });
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  };
+
+  // Rotazione marker
+  const [heading, setHeading] = useState<number>(0);
+
+  // Zoom navigazione 
+  const [navigationZoom, setNavigationZoom] = useState<number | null>(null);
 
   /* ----------PERCORSO ----------*/
   useEffect(() => {
-  if (!navigator.geolocation) return;
+    if (!navigator.geolocation) return;
 
-  const watchId = navigator.geolocation.watchPosition(
-    (pos) => {
-      const newPosition = {
-        lat: pos.coords.latitude,
-        lng: pos.coords.longitude,
-      };
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const newPosition: google.maps.LatLngLiteral = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        };
 
-      // prima posizione → sempre accettata
-      if (!lastPositionRef.current) {
+        /* ---------- PRIMA POSIZIONE ---------- */
+        if (!lastPositionRef.current) {
+          lastPositionRef.current = newPosition;
+          setUserPosition(newPosition);
+          setSnappedPosition(newPosition);
+          return;
+        }
+
+        /* ---------- DISTANZA ---------- */
+        const movedMeters = distanceInMeters(
+          lastPositionRef.current,
+          newPosition
+        );
+
+        if (movedMeters < 10) return;
+
+        /* ---------- SNAP VISIVO ---------- */
+        let snapped = newPosition;
+
+        if (routePolyline) {
+          snapped = getClosestPointOnRoute(
+            newPosition,
+            routePolyline
+          );
+
+          if (snappedPosition) {
+            animateMarker(snappedPosition, snapped);
+          } else {
+            setSnappedPosition(snapped);
+          }
+
+          /* ---------- ROTAZIONE MARKER ---------- */
+          if (snappedPosition) {
+            const newHeading = calculateBearing(
+              snappedPosition,
+              snapped
+            );
+            setHeading(newHeading);
+          }
+
+          /* ---------- RICALCOLO SOLO SE OFF-ROUTE ---------- */
+          if (isOffRoute(newPosition, routePolyline)) {
+            setUserPosition(newPosition);
+          }
+        } else {
+          // nessuna navigazione attiva
+          setSnappedPosition(newPosition);
+          setUserPosition(newPosition);
+        }
+
+        /* ---------- ZOOM + PAN AUTOMATICI ---------- */
+        if (
+          navigationEvent &&
+          mapRef.current &&
+          pos.coords.speed !== null
+        ) {
+          const targetZoom = getZoomFromSpeed(pos.coords.speed);
+          mapRef.current.setZoom(targetZoom);
+          mapRef.current.panTo(snapped);
+        }
+
         lastPositionRef.current = newPosition;
-        setUserPosition(newPosition);
-        return;
+      },
+      (err) => {
+        console.error('Errore geolocalizzazione', err);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 3000,
+        timeout: 10000,
       }
+    );
 
-      const movedMeters = distanceInMeters(
-        lastPositionRef.current,
-        newPosition
-      );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [
+    navigationEvent,
+    routePolyline,
+    snappedPosition,
+  ]);
 
-      // ricalcolo solo se > 20 metri
-      if (movedMeters >= 20) {
-        lastPositionRef.current = newPosition;
-        setUserPosition(newPosition);
-      }
-    },
-    (err) => {
-      console.error('Errore geolocalizzazione', err);
-    },
-    {
-      enableHighAccuracy: true,
-      maximumAge: 5000,
-      timeout: 10000,
-    }
-  );
-
-  return () => navigator.geolocation.clearWatch(watchId);
-}, []);
 
 
   useEffect(() => {
@@ -148,6 +307,10 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
       (result, status) => {
         if (status === 'OK' && result) {
           setDirections(result);
+          
+          const polyline = new google.maps.Polyline({path: result.routes[0].overview_path});
+        
+          setRoutePolyline(polyline);
 
           const duration =
             result.routes[0].legs[0].duration?.text;
@@ -160,9 +323,12 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
 
 
   useEffect(() => {
-    if (!navigationEvent) {
+    if (!navigationEvent && mapRef.current) {
       setDirections(null);
+      setRoutePolyline(null);
       setEta(null);
+      mapRef.current.setZoom(position ? 14 : 12);
+      setNavigationZoom(null);
     }
   }, [navigationEvent]);
 
@@ -286,12 +452,18 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
         }}
       >
         {/* 📍 USER */}
-        {position && (
+        {(snappedPosition ||  position) && (
           <OverlayView
-            position={position}
+            position={(snappedPosition ?? position)!}
             mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
           >
-            <div className="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg -translate-x-1/2 -translate-y-1/2" />
+            <div
+              className="w-5 h-5 bg-blue-600 clip-arrow border-2 border-white shadow-lg transition-transform duration-300"
+              style={{
+                transform: `translate(-50%, -50%) rotate(${heading}deg)`,
+              }}
+            />
+
           </OverlayView>
         )}
         {navigationEvent && (

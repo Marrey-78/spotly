@@ -189,3 +189,7 @@
     display: none;  /* Chrome, Safari and Opera */
   }
 }
+
+.clip-arrow {
+  clip-path: polygon(50% 0%, 90% 100%, 50% 75%, 10% 100%);
+}

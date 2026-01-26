@@ -7,7 +7,14 @@ import { ProfileView } from './app/components/ProfileView';
 import { EventDetailModal } from './app/components/EventDetailModal';
 import { mockEvents } from './app/data/mockEvents';
 import type { Event } from './app/types/event';
+import { LoginView } from './app/components/LoginView';
 
+// Login
+interface UserData {
+  name: string;
+  email: string;
+  avatar: string;
+}
 
 
 export default function App() {
@@ -16,10 +23,22 @@ export default function App() {
     const today = new Date();
     return today.toISOString().split('T')[0];
   };
+
+  // Benvenuto più login
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  
   
   const [selectedDate, setSelectedDate] = useState(getTodayString());
   const [activeSection, setActiveSection] = useState<NavSection>('home');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+  // Events
+  const filteredEvents = mockEvents.filter((event) => event.date === selectedDate);
+  const favoriteEvents = mockEvents.filter((event) => favorites.has(event.id));
+
+  // Mappa
+  const [navigationEvent, setNavigationEvent] = useState<Event | null>(null);
 
     //Pop up
   const [travelMode, setTravelMode] = useState<google.maps.TravelMode | null>(null);
@@ -31,12 +50,25 @@ export default function App() {
     if (storedFavorites) {
       setFavorites(new Set(JSON.parse(storedFavorites)));
     }
+    
+    const storedUser = localStorage.getItem('userData');
+    if (storedUser) {
+      setUserData(JSON.parse(storedUser));
+      setIsLoggedIn(true);
+    }
   }, []);
 
   // Save favorites to localStorage when they change
   useEffect(() => {
     localStorage.setItem('favorites', JSON.stringify(Array.from(favorites)));
   }, [favorites]);
+
+  // Save user data to localStorage when it changes
+  useEffect(() => {
+    if (userData) {
+      localStorage.setItem('userData', JSON.stringify(userData));
+    }
+  }, [userData]);
 
   const toggleFavorite = (eventId: string) => {
     setFavorites((prev) => {
@@ -50,9 +82,6 @@ export default function App() {
     });
   };
 
-  const filteredEvents = mockEvents.filter((event) => event.date === selectedDate);
-  const favoriteEvents = mockEvents.filter((event) => favorites.has(event.id));
-
   const handleEventClick = (event: Event) => {
     setSelectedEvent(event);
   };
@@ -61,7 +90,31 @@ export default function App() {
     setSelectedEvent(null);
   };
 
-  const [navigationEvent, setNavigationEvent] = useState<Event | null>(null);
+  
+  const handleLogin = (user: UserData) => {
+    setUserData(user);
+    setIsLoggedIn(true);
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUserData(null);
+    localStorage.removeItem('userData');
+    setActiveSection('home');
+  };
+
+    // Show login view if not logged in
+  if (!isLoggedIn) {
+    return <LoginView onLogin={handleLogin} />;
+  }
+
+  const handleUpdateProfile = (data: { name: string; email: string }) => {
+    if (userData) {
+      const updatedUser = { ...userData, ...data };
+      setUserData(updatedUser);
+    }
+  };
+
 
   const handleNavigate = (event: Event, mode: google.maps.TravelMode) => {
     setActiveSection('home');
@@ -108,12 +161,15 @@ export default function App() {
           />
         )}
         
-        {activeSection === 'profile' && (
+        {activeSection === 'profile' &&  userData && (
           <ProfileView
             favoriteEvents={favoriteEvents}
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
             onEventClick={handleEventClick}
+            userData={userData}
+            onLogout={handleLogout}
+            onUpdateProfile={handleUpdateProfile}
           />
         )}
       </div>

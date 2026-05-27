@@ -578,7 +578,7 @@ useEffect(() => {
       {!isNavigating && (
         <div className="absolute bottom-[88px] left-0 right-0 z-20 pointer-events-none">
           <div className="px-4">
-            <div className="flex gap-4 overflow-x-auto pb-4 pointer-events-auto scrollbar-hide">
+            <div className="flex gap-4 overflow-x-auto pt-3 pb-2 pointer-events-auto scrollbar-hide">
               {events.map((event) => {
                 const Icon = getIcon(event.type);
                 const color = getColor(event.type);
@@ -589,10 +589,10 @@ useEffect(() => {
                     key={event.id}
                     ref={setCardRef(event.id)}
                     onClick={() => handleCardClick(event)}
-                    className={`flex-shrink-0 w-72 rounded-2xl overflow-hidden shadow-xl transition-all ${
+                    className={`flex-shrink-0 w-72 rounded-2xl overflow-hidden transition-all duration-200 ${
                       isActive
-                        ? 'scale-105 ring-2 ring-indigo-600 bg-white'
-                        : 'bg-white/95'
+                        ? 'scale-[1.03] ring-2 ring-indigo-600 bg-white shadow-md'
+                        : 'bg-white/95 shadow-md'
                     }`}
                   >
                     <div className="relative h-36">

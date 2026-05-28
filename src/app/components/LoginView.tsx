@@ -2,9 +2,16 @@ import { useState } from 'react';
 import { Mail, Lock, User, ArrowRight, Sparkles, Calendar, MapPin, Heart } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { loginUser, registerUser } from '../api/auth';
 
 interface LoginViewProps {
-  onLogin: (userData: { name: string; email: string; avatar: string }) => void;
+  onLogin: (userData: {
+    id: string;
+    name: string;
+    email: string;
+    avatar: string;
+    role: 'user' | 'venue_owner';
+  }) => void;
 }
 
 export function LoginView({ onLogin }: LoginViewProps) {
@@ -13,30 +20,42 @@ export function LoginView({ onLogin }: LoginViewProps) {
     name: '',
     email: '',
     password: '',
+    hasVenue: false,
+
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Simulazione login/registrazione
-    const userData = {
-      name: formData.name || formData.email.split('@')[0],
-      email: formData.email,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.email}`,
-    };
-    
-    onLogin(userData);
-  };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-  const handleQuickLogin = () => {
-    // Login rapido con dati demo
-    const demoUser = {
-      name: 'Marco Rossi',
-      email: 'marco.rossi@example.com',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=demo',
-    };
-    onLogin(demoUser);
-  };
+  try {
+    if (isLogin) {
+      const result = await loginUser({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      localStorage.setItem('token', result.token);
+      localStorage.setItem('userData', JSON.stringify(result.user));
+
+      onLogin(result.user);
+    } else {
+      const result = await registerUser({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        hasVenue: formData.hasVenue,
+      });
+
+      localStorage.setItem('token', result.token);
+      localStorage.setItem('userData', JSON.stringify(result.user));
+
+      onLogin(result.user);
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Email o password non validi');
+  }
+};
 
   return (
     <div className="h-screen flex flex-col md:flex-row overflow-hidden">
@@ -155,6 +174,23 @@ export function LoginView({ onLogin }: LoginViewProps) {
                 </div>
               </div>
 
+              {!isLogin && (
+                <label className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={formData.hasVenue}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        hasVenue: e.target.checked,
+                      })
+                    }
+                    className="h-4 w-4"
+                  />
+                  Ho uno o più locali e voglio inserire eventi
+                </label>
+              )}
+
               {isLogin && (
                 <div className="flex justify-end">
                   <button
@@ -185,15 +221,6 @@ export function LoginView({ onLogin }: LoginViewProps) {
                 </div>
               </div>
 
-              <Button
-                type="button"
-                onClick={handleQuickLogin}
-                variant="outline"
-                className="w-full mt-4 h-12 rounded-xl border-2 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50"
-              >
-                <Sparkles className="w-5 h-5 mr-2 text-indigo-600" />
-                Prova con account demo
-              </Button>
             </div>
 
             <div className="mt-6 text-center">

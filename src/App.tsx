@@ -8,14 +8,16 @@ import { EventDetailModal } from './app/components/EventDetailModal';
 import { mockEvents } from './app/data/mockEvents';
 import type { Event } from './app/types/event';
 import { LoginView } from './app/components/LoginView';
+import { VenuesView } from './app/components/VenuesView';
 
 // Login
 interface UserData {
+  id: string;
   name: string;
   email: string;
   avatar: string;
+  role: 'user' | 'venue_owner';
 }
-
 
 export default function App() {
   // Set today's date as default
@@ -51,8 +53,9 @@ export default function App() {
       setFavorites(new Set(JSON.parse(storedFavorites)));
     }
     
+    const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('userData');
-    if (storedUser) {
+    if (storedUser && storedToken) {
       setUserData(JSON.parse(storedUser));
       setIsLoggedIn(true);
     }
@@ -94,13 +97,16 @@ export default function App() {
   const handleLogin = (user: UserData) => {
     setUserData(user);
     setIsLoggedIn(true);
+    localStorage.setItem('userData', JSON.stringify(user));
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUserData(null);
     localStorage.removeItem('userData');
+    localStorage.removeItem('token');
     setActiveSection('home');
+    
   };
 
     // Show login view if not logged in
@@ -172,10 +178,13 @@ export default function App() {
             onUpdateProfile={handleUpdateProfile}
           />
         )}
+        {activeSection === 'venues' && userData?.role === 'venue_owner' && (
+          <VenuesView />
+        )}
       </div>
 
       {/* Bottom Navigation */}
-      <BottomNav activeSection={activeSection} onSectionChange={setActiveSection} />
+      <BottomNav activeSection={activeSection} onSectionChange={setActiveSection}  isVenueOwner={userData?.role === 'venue_owner'} />
 
       {/* Event Detail Modal */}
       {selectedEvent && (

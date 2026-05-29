@@ -53,3 +53,16 @@ export async function createVenue(data: {
 
   return response.json();
 }
+
+export async function deleteVenue(venueId: string) {
+  const response = await fetch(`${API_URL}/venues/${venueId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Errore eliminazione locale');
+  }
+
+  return response.json();
+}

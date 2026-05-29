@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Store, Plus, MapPin, Phone, Instagram } from 'lucide-react';
-import { getVenueTypes, getMyVenues, createVenue } from '../api/venues';
+import { getVenueTypes, getMyVenues, createVenue, deleteVenue } from '../api/venues';
+import { Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { EventsManagerView } from './EventsManagerView';
 
 interface VenueType {
   id: string;
@@ -26,6 +28,7 @@ export function VenuesView() {
   const [venueTypes, setVenueTypes] = useState<VenueType[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
 
   const [formData, setFormData] = useState({
     venue_type_id: '',
@@ -90,6 +93,22 @@ export function VenuesView() {
       alert('Errore durante la creazione del locale');
     }
   };
+  const handleDeleteVenue = async (venueId: string) => {
+    const confirmed = window.confirm(
+      'Sei sicuro di voler eliminare questo locale? Verranno eliminati anche tutti gli eventi collegati.'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteVenue(venueId);
+      await loadData();
+    } catch (error) {
+      console.error(error);
+      alert('Errore durante eliminazione locale');
+    }
+  };
+
 
   if (isLoading) {
     return (
@@ -101,6 +120,15 @@ export function VenuesView() {
       </div>
     );
   }
+
+  if (selectedVenue) {
+  return (
+    <EventsManagerView
+      venue={selectedVenue}
+      onBack={() => setSelectedVenue(null)}
+    />
+  );
+}
 
   return (
     <div className="h-full overflow-y-auto bg-gray-50 p-4 pb-24">
@@ -290,11 +318,21 @@ export function VenuesView() {
                 </div>
 
                 <Button
+                  onClick={() => setSelectedVenue(venue)}
                   className="w-full mt-4 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
                   variant="ghost"
                 >
                   Gestisci eventi
                 </Button>
+                
+                <Button
+                    onClick={() => handleDeleteVenue(venue.id)}
+                    className="w-full mt-2 h-11 rounded-xl bg-red-50 text-red-600 hover:bg-red-100"
+                    variant="ghost"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Elimina locale
+                  </Button>
               </div>
             </div>
           ))}

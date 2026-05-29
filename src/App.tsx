@@ -5,10 +5,10 @@ import { MapView } from './app/components/MapView';
 import { EventsList } from './app/components/EventsList';
 import { ProfileView } from './app/components/ProfileView';
 import { EventDetailModal } from './app/components/EventDetailModal';
-import { mockEvents } from './app/data/mockEvents';
 import type { Event } from './app/types/event';
 import { LoginView } from './app/components/LoginView';
 import { VenuesView } from './app/components/VenuesView';
+import { getPublicEvents } from './app/api/publicEvents';
 
 // Login
 interface UserData {
@@ -36,8 +36,10 @@ export default function App() {
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   // Events
-  const filteredEvents = mockEvents.filter((event) => event.date === selectedDate);
-  const favoriteEvents = mockEvents.filter((event) => favorites.has(event.id));
+  const [events, setEvents] = useState<Event[]>([]);
+  const [isEventsLoading, setIsEventsLoading] = useState(true);
+  const filteredEvents = events.filter((event) => event.date === selectedDate);
+  const favoriteEvents = events.filter((event) => favorites.has(event.id));
 
   // Mappa
   const [navigationEvent, setNavigationEvent] = useState<Event | null>(null);
@@ -72,6 +74,44 @@ export default function App() {
       localStorage.setItem('userData', JSON.stringify(userData));
     }
   }, [userData]);
+
+    // use effect per gli eventi 
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        const data = await getPublicEvents();
+
+        const mappedEvents = data.map((event: any) => ({
+            id: event.id,
+            title: event.title,
+            description: event.description,
+                  
+            date: event.date,
+            time: event.start_time,
+                  
+            venue: event.venue_name,
+                  
+            latitude: Number(event.latitude),
+            longitude: Number(event.longitude),
+                  
+            type: event.category || 'event',
+            price: event.price ? `€${event.price}` : 'Gratis',
+            image: event.image_url,
+        }));
+
+        setEvents(mappedEvents);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsEventsLoading(false);
+      }
+    };
+
+    if (isLoggedIn) {
+      loadEvents();
+    }
+  }, [isLoggedIn]);
+
 
   const toggleFavorite = (eventId: string) => {
     setFavorites((prev) => {
@@ -159,7 +199,7 @@ export default function App() {
         
         {activeSection === 'events' && (
           <EventsList
-            events={mockEvents}
+            events={events}
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
             onEventClick={handleEventClick}

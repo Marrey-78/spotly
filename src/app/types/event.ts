@@ -1,4 +1,4 @@
-export type EventType = 'club' | 'concert' | 'theater' | 'cinema' | 'restaurant';
+export type EventType = 'club' | 'live_music' | 'theater' | 'cinema' | 'restaurant' | 'pub' | 'bar' ;
 
 export interface Event {
   id: string;

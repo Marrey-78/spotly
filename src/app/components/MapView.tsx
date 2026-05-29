@@ -429,7 +429,7 @@ useEffect(() => {
   const getIcon = (type: Event['type']) => {
     switch (type) {
       case 'club':
-      case 'concert':
+      case 'live_music':
         return Music;
       case 'theater':
         return Theater;
@@ -446,7 +446,7 @@ useEffect(() => {
     switch (type) {
       case 'club':
         return 'bg-purple-500';
-      case 'concert':
+      case 'live_music':
         return 'bg-pink-500';
       case 'theater':
         return 'bg-blue-500';
@@ -463,7 +463,7 @@ useEffect(() => {
     switch (type) {
       case 'club':
         return 'Discoteca';
-      case 'concert':
+      case 'live_music':
         return 'Concerto';
       case 'theater':
         return 'Teatro';
@@ -476,6 +476,25 @@ useEffect(() => {
     }
   };
 
+  const getMarkerEmoji = (type: Event['type']) => {
+    switch (type) {
+      case 'club':
+        return '🎉';
+      case 'live_music':
+        return '🎵';
+      case 'theater':
+        return '🎭';
+      case 'cinema':
+        return '🎬';
+      case 'restaurant':
+        return '🍽️';
+      case 'pub':
+      case 'bar':
+        return '🍹';
+      default:
+        return '📍';
+    }
+  };
 
 
 
@@ -524,8 +543,7 @@ useEffect(() => {
 
         {/* 📌 EVENTS */}
         {!isNavigating && events.map((event) => {
-          const Icon = getIcon(event.type);
-          const color = getColor(event.type);
+          console.log(event.title, event.type);
           const isActive = activeEventId === event.id;
 
           return (
@@ -539,14 +557,14 @@ useEffect(() => {
                 className="relative -translate-x-1/2 -translate-y-1/2"
               >
                 <div
-                  className={`w-10 h-10 ${color} rounded-full flex items-center justify-center text-white shadow-lg border-2 transition-transform ${
+                  className={`w-12 h-12 rounded-full bg-white shadow-xl border-2 flex items-center justify-center text-xl transition-transform ${
                     isActive
-                      ? 'border-black scale-125'
+                      ? 'border-indigo-600 scale-125'
                       : 'border-white'
                   }`}
                 >
-                  <Icon className="w-5 h-5" />
-                </div>
+                <span>{getMarkerEmoji(event.type)}</span>
+              </div>
               </button>
             </OverlayView>
           );

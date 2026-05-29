@@ -238,13 +238,23 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
             />
           </div>
 
-          <Input
-            placeholder="Categoria es. DJ Set"
+          <select
             value={formData.category}
             onChange={(e) =>
               setFormData({ ...formData, category: e.target.value })
             }
-          />
+            className="w-full h-12 rounded-xl border border-gray-300 px-3 bg-white text-gray-900"
+            required
+          >
+            <option value="">Seleziona categoria</option>
+            <option value="club">Discoteca / Party</option>
+            <option value="concert">Concerto / Live Music</option>
+            <option value="theater">Teatro / Spettacolo</option>
+            <option value="cinema">Cinema</option>
+            <option value="restaurant">Ristorante / Cena</option>
+            <option value="restaurant">Pub / Bar</option>
+            <option value="restaurant">Lounge Bar</option>
+          </select>
 
           <Input
             type="number"
@@ -271,7 +281,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
             <label className="text-sm font-medium text-gray-700">
               Immagine evento
             </label>
-                    
+
             <Input
               type="file"
               accept="image/*"
@@ -280,11 +290,11 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
                 if (file) handleImageUpload(file);
               }}
             />
-          
+
             {isUploadingImage && (
               <p className="text-sm text-gray-500">Caricamento immagine...</p>
             )}
-          
+
             {formData.image_url && (
               <img
                 src={formData.image_url}
@@ -292,7 +302,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
                 className="w-full h-36 object-cover rounded-xl"
               />
             )}
-          
+
             <p className="text-sm font-medium text-gray-700">
               Oppure scegli una foto default
             </p>

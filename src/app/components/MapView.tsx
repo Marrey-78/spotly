@@ -454,6 +454,9 @@ useEffect(() => {
         return 'bg-orange-500';
       case 'restaurant':
         return 'bg-green-500';
+      case 'pub':
+      case 'bar':
+         return 'bg-yellow-500';
       default:
         return 'bg-gray-500';
     }
@@ -471,6 +474,10 @@ useEffect(() => {
         return 'Cinema';
       case 'restaurant':
         return 'Ristorante';
+      case 'pub':
+        return 'Pub';
+      case 'bar':
+        return 'Bar';
       default:
         return 'Evento';
     }
@@ -545,6 +552,7 @@ useEffect(() => {
         {!isNavigating && events.map((event) => {
           console.log(event.title, event.type);
           const isActive = activeEventId === event.id;
+          const color = getColor(event.type);
 
           return (
             <OverlayView
@@ -556,13 +564,13 @@ useEffect(() => {
                 onClick={() => handleMarkerClick(event)}
                 className="relative -translate-x-1/2 -translate-y-1/2"
               >
-                <div
-                  className={`w-12 h-12 rounded-full bg-white shadow-xl border-2 flex items-center justify-center text-xl transition-transform ${
-                    isActive
-                      ? 'border-indigo-600 scale-125'
-                      : 'border-white'
-                  }`}
-                >
+              <div
+                className={`w-12 h-12 rounded-full ${color} shadow-xl border-2 flex items-center justify-center text-xl ${
+                  isActive
+                    ? 'border-black scale-125'
+                    : 'border-white'
+                }`}
+              >
                 <span>{getMarkerEmoji(event.type)}</span>
               </div>
               </button>

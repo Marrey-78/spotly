@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Calendar, Clock, Euro, Plus, Ticket, Trash2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Euro, Plus, Ticket, Trash2, Pencil } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { createEvent, getVenueEvents, deleteEvent } from '../api/events';
+import { createEvent, getVenueEvents, deleteEvent, updateEvent } from '../api/events';
 import { getDefaultEventImages, uploadEventImage } from '../api/eventImages';
 
 interface Venue {
@@ -42,6 +42,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [defaultImages, setDefaultImages] = useState<DefaultImage[]>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<EventItem | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -78,7 +79,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
     e.preventDefault();
 
     try {
-      await createEvent({
+      const payload = {
         venue_id: venue.id,
         title: formData.title,
         description: formData.description || undefined,
@@ -86,13 +87,21 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
         start_time: formData.start_time,
         end_time: formData.end_time || undefined,
         price: formData.price ? Number(formData.price) : null,
-        category: formData.category || undefined,
+        category: formData.category,
         image_url: formData.image_url || undefined,
         ticket_url: formData.ticket_url || undefined,
         max_participants: formData.max_participants
           ? Number(formData.max_participants)
           : null,
-      });
+      };
+      
+      if (editingEvent) {
+        await updateEvent(editingEvent.id, payload);
+      } else {
+        await createEvent(payload);
+      }
+
+      setEditingEvent(null);
 
       setFormData({
         title: '',
@@ -150,6 +159,26 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
     }
   };
 
+  const startEditEvent = (event: EventItem) => {
+    setEditingEvent(event);
+    
+    setFormData({
+      title: event.title || '',
+      description: event.description || '',
+      event_date: event.event_date || '',
+      start_time: event.start_time || '',
+      end_time: event.end_time || '',
+      price: event.price ? String(event.price) : '',
+      category: event.category || '',
+      image_url: event.image_url || '',
+      ticket_url: event.ticket_url || '',
+      max_participants: event.max_participants
+        ? String(event.max_participants)
+        : '',
+    });
+    
+  };
+
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center bg-gray-50">
@@ -191,7 +220,9 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
           onSubmit={handleCreateEvent}
           className="bg-white rounded-2xl shadow-md p-4 space-y-4 mb-6"
         >
-          <h2 className="text-lg font-bold text-gray-900">Nuovo evento</h2>
+          <h2 className="text-lg font-bold text-gray-900">
+            {editingEvent ? 'Modifica evento' : 'Nuovo evento'}
+          </h2>
 
           <Input
             placeholder="Titolo evento"
@@ -346,7 +377,10 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setShowForm(false)}
+              onClick={() => {
+                setEditingEvent(null);
+                setShowForm(false);
+              }}
               className="flex-1 h-12 rounded-xl"
             >
               Annulla
@@ -356,7 +390,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
               type="submit"
               className="flex-1 h-12 rounded-xl bg-indigo-600 text-white"
             >
-              Salva
+              {editingEvent ? 'Salva modifiche' : 'Salva'}
             </Button>
           </div>
         </form>
@@ -374,11 +408,120 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
         </div>
       ) : (
         <div className="space-y-4">
-          {events.map((event) => (
+          {events.map((event) => {
+            const isEditing = editingEvent?.id === event.id;
+
+            return(
             <div
               key={event.id}
               className="bg-white rounded-2xl shadow-md overflow-hidden"
             >
+              {isEditing ? (
+                <form
+                  onSubmit={handleCreateEvent}
+                  className="p-4 space-y-4 border-t border-gray-100"
+                >
+                  <Input
+                    placeholder="Titolo evento"
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                    required
+                  />
+              
+                  <Input
+                    placeholder="Descrizione"
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                  />
+              
+                  <select
+                    value={formData.category}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
+                    className="w-full h-12 rounded-xl border border-gray-300 px-3 bg-white text-gray-900"
+                    required
+                  >
+                    <option value="">Seleziona categoria</option>
+                    <option value="club">Discoteca / Party</option>
+                    <option value="concert">Concerto / Live Music</option>
+                    <option value="theater">Teatro / Spettacolo</option>
+                    <option value="cinema">Cinema</option>
+                    <option value="restaurant">Ristorante / Cena</option>
+                  </select>
+                  
+                  <Input
+                    type="date"
+                    value={formData.event_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, event_date: e.target.value })
+                    }
+                    required
+                  />
+              
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      type="time"
+                      value={formData.start_time}
+                      onChange={(e) =>
+                        setFormData({ ...formData, start_time: e.target.value })
+                      }
+                      required
+                    />
+              
+                    <Input
+                      type="time"
+                      value={formData.end_time}
+                      onChange={(e) =>
+                        setFormData({ ...formData, end_time: e.target.value })
+                      }
+                    />
+                  </div>
+                    
+                  <Input
+                    type="number"
+                    placeholder="Prezzo"
+                    value={formData.price}
+                    onChange={(e) =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
+                  />
+              
+                  <Input
+                    placeholder="URL immagine evento"
+                    value={formData.image_url}
+                    onChange={(e) =>
+                      setFormData({ ...formData, image_url: e.target.value })
+                    }
+                  />
+              
+                  <div className="flex gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setEditingEvent(null)}
+                      className="flex-1 h-11 rounded-xl"
+                    >
+                      Annulla
+                    </Button>
+                  
+                    <Button
+                      type="submit"
+                      className="flex-1 h-11 rounded-xl bg-indigo-600 text-white"
+                    >
+                      Salva modifiche
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  {/* qui rimane la tua card normale */}
+                </>
+              )}
               {event.image_url && (
                 <img
                   src={event.image_url}
@@ -439,6 +582,15 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
                   )}
 
                   <Button
+                    onClick={() => startEditEvent(event)}
+                    className="w-full mt-4 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                    variant="ghost"
+                  >
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Modifica evento
+                  </Button>
+
+                  <Button
                       onClick={() => handleDeleteEvent(event.id)}
                       className="w-full mt-4 h-11 rounded-xl bg-red-50 text-red-600 hover:bg-red-100"
                       variant="ghost"
@@ -449,7 +601,8 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
                 </div>
               </div>
             </div>
-          ))}
+            );
+      })}
         </div>
       )}
     </div>

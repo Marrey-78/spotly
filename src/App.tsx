@@ -247,6 +247,7 @@ export default function App() {
       <div className="flex-1 overflow-hidden">
         {activeSection === 'home' && (
           <div className="relative h-full">
+            {/* Da scommentare per il filtro sulla città 
             <div className="absolute top-4 left-4 right-4 z-40 flex gap-2">
               <button
                 onClick={() => setShowCityModal(true)}
@@ -266,7 +267,7 @@ export default function App() {
                 </button>
               )}
             </div>
-            
+            */}
 
             <MapView
               events={filteredEvents}
@@ -280,6 +281,7 @@ export default function App() {
         
         {activeSection === 'events' && (
           <div className="h-full overflow-y-auto pb-20">
+            {/* Da scommentare per il filtro sulla città 
             <div className="p-4 bg-gray-50">
               <div className="bg-white rounded-2xl shadow-md p-4">
                 <label className="text-sm font-semibold text-gray-700">
@@ -312,6 +314,7 @@ export default function App() {
                 )}
               </div>
             </div>
+            */}
             
             <EventsList
               events={events}
@@ -352,7 +355,7 @@ export default function App() {
           onNavigate={handleNavigate}
         />
       )}
-
+{/* Da scommentare per il filtro sulla città
       {showCityModal && (
         <div className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center px-4">
           <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl p-5">
@@ -392,7 +395,7 @@ export default function App() {
           </div>
         </div>
       )}
-        
+        */}
     </div>
   );
 }

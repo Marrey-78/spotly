@@ -76,27 +76,55 @@ export async function createOrganizerEvent(data: {
 }
 
 export async function createEvent(data: {
-  venue_id: string;
-  title: string;
-  description?: string;
-  event_date: string;
-  start_time: string;
-  end_time?: string;
-  price?: number | null;
-  category?: string;
-  image_url?: string;
-  ticket_url?: string;
-  max_participants?: number | null;
-}) {
-  const response = await fetch(`${API_URL}/events`, {
-    method: 'POST',
-    headers: getAuthHeaders(),
-    body: JSON.stringify(data),
-  });
-
-  if (!response.ok) {
-    throw new Error('Errore creazione evento');
+    venue_id: string;
+    title: string;
+    description?: string;
+    event_date: string;
+    start_time: string;
+    end_time?: string;
+    price?: number | null;
+    category?: string;
+    image_url?: string;
+    ticket_url?: string;
+    max_participants?: number | null;
+  }) {
+    const response = await fetch(`${API_URL}/events`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+  
+    if (!response.ok) {
+      throw new Error('Errore creazione evento');
+    }
+  
+    return response.json();
   }
 
-  return response.json();
-}
+export async function updateEvent(
+    eventId: string,
+    data: {
+      title: string;
+      description?: string;
+      event_date: string;
+      start_time: string;
+      end_time?: string;
+      price?: number | null;
+      category?: string;
+      image_url?: string;
+      ticket_url?: string;
+      max_participants?: number | null;
+    }
+  ) {
+    const response = await fetch(`${API_URL}/events/${eventId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      throw new Error('Errore modifica evento');
+    }
+
+    return response.json();
+  }

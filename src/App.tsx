@@ -65,6 +65,7 @@ export default function App() {
     }));
   };
 
+  /*
   const loadEventsByFilter = async () => {
     try {
       setIsEventsLoading(true);
@@ -89,6 +90,19 @@ export default function App() {
           setEvents(mapBackendEvents(data));
         }
       );
+    } finally {
+      setIsEventsLoading(false);
+    }
+  };
+*/
+  const loadEventsByFilter = async () => {
+    try {
+      setIsEventsLoading(true);
+
+      const data = await getPublicEvents();
+      setEvents(mapBackendEvents(data));
+    } catch (error) {
+      console.error(error);
     } finally {
       setIsEventsLoading(false);
     }
@@ -196,11 +210,18 @@ export default function App() {
     }
   }, [isLoggedIn]);
 
+  /*
   useEffect(() => {
     if (isLoggedIn) {
       loadEventsByFilter();
     }
   }, [isLoggedIn, selectedCity]);
+*/
+  useEffect(() => {
+    if (isLoggedIn) {
+      loadEventsByFilter();
+    }
+  }, [isLoggedIn]);
 
   const toggleFavorite = (eventId: string) => {
     setFavorites((prev) => {

@@ -41,6 +41,8 @@ export default function App() {
   const filteredEvents = events.filter((event) => event.date === selectedDate);
   const favoriteEvents = events.filter((event) => favorites.has(event.id));
   const [selectedCity, setSelectedCity] = useState<string>('nearby');
+  const [cityInput, setCityInput] = useState('');
+  const [showCityModal, setShowCityModal] = useState(false);
 
   // Mappa
   const [navigationEvent, setNavigationEvent] = useState<Event | null>(null);
@@ -48,6 +50,22 @@ export default function App() {
     //Pop up
   const [travelMode, setTravelMode] = useState<google.maps.TravelMode | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+
+  const applyCityFilter = (city: string) => {
+    const cleanedCity = city.trim();
+    
+    if (!cleanedCity) {
+      setSelectedCity('nearby');
+      return;
+    }
+  
+    setSelectedCity(cleanedCity);
+  };
+  
+  const resetCityFilter = () => {
+    setSelectedCity('nearby');
+    setCityInput('');
+  };
 
   const mapBackendEvents = (data: any[]): Event[] => {
     return data.map((event: any) => ({
@@ -222,18 +240,27 @@ export default function App() {
       <div className="flex-1 overflow-hidden">
         {activeSection === 'home' && (
           <div className="relative h-full">
-            <div className="absolute top-4 left-4 right-4 z-40">
-              <select
-                value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value)}
-                className="w-full h-11 rounded-xl bg-white shadow-md border border-gray-200 px-3"
+            {/* DA SCOMMENTARE SE VOGLIO METTERE IL FILTRO CITTÀ NELLA MAPPA
+            <div className="absolute top-4 left-4 right-4 z-40 flex gap-2">
+              <button
+                onClick={() => setShowCityModal(true)}
+                className="flex-1 h-11 rounded-xl bg-white shadow-md border border-gray-200 px-4 text-left text-sm font-medium text-gray-700"
               >
-                <option value="nearby">Vicino a me</option>
-                <option value="Torino">Torino</option>
-                <option value="Milano">Milano</option>
-                <option value="Roma">Roma</option>
-              </select>
+                {selectedCity === 'nearby'
+                  ? '📍 Eventi vicino a me'
+                  : `📍 ${selectedCity}`}
+              </button>
+                
+              {selectedCity !== 'nearby' && (
+                <button
+                  onClick={resetCityFilter}
+                  className="h-11 px-4 rounded-xl bg-white shadow-md border border-gray-200 text-sm font-semibold text-red-500"
+                >
+                  Reset
+                </button>
+              )}
             </div>
+            */}
 
             <MapView
               events={filteredEvents}
@@ -247,19 +274,40 @@ export default function App() {
         
         {activeSection === 'events' && (
           <div className="h-full overflow-y-auto pb-20">
+            {/* DA SCOMMENTARE SE VOGLIO METTERE IL FILTRO CITTÀ NELLA MAPPA
             <div className="p-4 bg-gray-50">
-              <select
-                value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value)}
-                className="w-full h-11 rounded-xl bg-white shadow-md border border-gray-200 px-3"
-              >
-                <option value="nearby">Vicino a me</option>
-                <option value="Torino">Torino</option>
-                <option value="Milano">Milano</option>
-                <option value="Roma">Roma</option>
-              </select>
+              <div className="bg-white rounded-2xl shadow-md p-4">
+                <label className="text-sm font-semibold text-gray-700">
+                  Cerca eventi per città
+                </label>
+                    
+                <div className="flex gap-2 mt-3">
+                  <input
+                    value={cityInput}
+                    onChange={(e) => setCityInput(e.target.value)}
+                    placeholder="Es. Torino"
+                    className="flex-1 h-11 rounded-xl border border-gray-300 px-4"
+                  />
+            
+                  <button
+                    onClick={() => applyCityFilter(cityInput)}
+                    className="h-11 px-4 rounded-xl bg-indigo-600 text-white font-semibold"
+                  >
+                    Cerca
+                  </button>
+                </div>
+                    
+                {selectedCity !== 'nearby' && (
+                  <button
+                    onClick={resetCityFilter}
+                    className="mt-3 text-sm font-semibold text-red-500"
+                  >
+                    Rimuovi filtro città
+                  </button>
+                )}
+              </div>
             </div>
-                
+            */}
             <EventsList
               events={events}
               favorites={favorites}
@@ -299,6 +347,48 @@ export default function App() {
           onNavigate={handleNavigate}
         />
       )}
+
+{/* DA SCOMMENTARE SE VOGLIO METTERE IL FILTRO CITTÀ NELLA MAPPA
+      {showCityModal && (
+        <div className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center px-4">
+          <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl p-5">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
+              Cerca città
+            </h2>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Inserisci la città in cui vuoi vedere gli eventi.
+            </p>
+
+            <input
+              value={cityInput}
+              onChange={(e) => setCityInput(e.target.value)}
+              placeholder="Es. Torino, Milano, Roma"
+              className="w-full h-12 rounded-xl border border-gray-300 px-4 mb-4"
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCityModal(false)}
+                className="flex-1 h-11 rounded-xl border border-gray-300 font-semibold text-gray-700"
+              >
+                Annulla
+              </button>
+
+              <button
+                onClick={() => {
+                  applyCityFilter(cityInput);
+                  setShowCityModal(false);
+                }}
+                className="flex-1 h-11 rounded-xl bg-indigo-600 text-white font-semibold"
+              >
+                Cerca
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+        */}
     </div>
   );
 }

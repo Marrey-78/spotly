@@ -75,6 +75,12 @@ export default function App() {
         return;
       }
 
+      if (!navigator.geolocation) {
+        const data = await getPublicEvents();
+        setEvents(mapBackendEvents(data));
+        return;
+      }
+
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const data = await getNearbyEvents(
@@ -82,15 +88,27 @@ export default function App() {
             position.coords.longitude,
             20
           );
+
           setEvents(mapBackendEvents(data));
+          setIsEventsLoading(false);
         },
         async () => {
           const data = await getPublicEvents();
           setEvents(mapBackendEvents(data));
+          setIsEventsLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 60000,
         }
       );
+    } catch (error) {
+      console.error(error);
     } finally {
-      setIsEventsLoading(false);
+      if (selectedCity !== 'nearby' || !navigator.geolocation) {
+        setIsEventsLoading(false);
+      }
     }
   };
 
@@ -121,80 +139,6 @@ export default function App() {
     }
   }, [userData]);
 
-  // use effect per gli eventi
-  useEffect(() => {
-    const mapBackendEvents = (data: any[]): Event[] => {
-      return data.map((event: any) => ({
-        id: event.id,
-        title: event.title,
-        description: event.description,
-
-        date: event.date,
-        time: event.start_time,
-
-        venue: event.venue_name,
-
-        latitude: Number(event.latitude),
-        longitude: Number(event.longitude),
-
-        type: event.category || 'event',
-        price: event.price ? `€${event.price}` : 'Gratis',
-        image: event.image_url,
-      }));
-    };
-
-    const loadAllEvents = async () => {
-      const data = await getPublicEvents();
-      setEvents(mapBackendEvents(data));
-    };
-
-    const loadNearbyEvents = async (
-      lat: number,
-      lng: number,
-      radiusKm = 20
-    ) => {
-      const data = await getNearbyEvents(lat, lng, radiusKm);
-      setEvents(mapBackendEvents(data));
-    };
-
-    const loadEvents = async () => {
-      try {
-        setIsEventsLoading(true);
-
-        if (!navigator.geolocation) {
-          await loadAllEvents();
-          return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            await loadNearbyEvents(
-              position.coords.latitude,
-              position.coords.longitude,
-              20
-            );
-            setIsEventsLoading(false);
-          },
-          async () => {
-            await loadAllEvents();
-            setIsEventsLoading(false);
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 8000,
-            maximumAge: 60000,
-          }
-        );
-      } catch (error) {
-        console.error(error);
-        setIsEventsLoading(false);
-      }
-    };
-
-    if (isLoggedIn) {
-      loadEvents();
-    }
-  }, [isLoggedIn]);
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -277,23 +221,53 @@ export default function App() {
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
         {activeSection === 'home' && (
-          <MapView 
-            events={filteredEvents} 
-            onEventClick={handleEventClick} 
-            navigationEvent={navigationEvent}
-            travelMode={travelMode}
-            onCancelNavigation={handleCancelNavigation}
+          <div className="relative h-full">
+            <div className="absolute top-4 left-4 right-4 z-40">
+              <select
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                className="w-full h-11 rounded-xl bg-white shadow-md border border-gray-200 px-3"
+              >
+                <option value="nearby">Vicino a me</option>
+                <option value="Torino">Torino</option>
+                <option value="Milano">Milano</option>
+                <option value="Roma">Roma</option>
+              </select>
+            </div>
+
+            <MapView
+              events={filteredEvents}
+              onEventClick={handleEventClick}
+              navigationEvent={navigationEvent}
+              travelMode={travelMode}
+              onCancelNavigation={handleCancelNavigation}
             />
+          </div>
         )}
         
         {activeSection === 'events' && (
-          <EventsList
-            events={events}
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-            onEventClick={handleEventClick}
-            showFilters={true}
-          />
+          <div className="h-full overflow-y-auto pb-20">
+            <div className="p-4 bg-gray-50">
+              <select
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                className="w-full h-11 rounded-xl bg-white shadow-md border border-gray-200 px-3"
+              >
+                <option value="nearby">Vicino a me</option>
+                <option value="Torino">Torino</option>
+                <option value="Milano">Milano</option>
+                <option value="Roma">Roma</option>
+              </select>
+            </div>
+                
+            <EventsList
+              events={events}
+              favorites={favorites}
+              onToggleFavorite={toggleFavorite}
+              onEventClick={handleEventClick}
+              showFilters={true}
+            />
+          </div>
         )}
         
         {activeSection === 'profile' &&  userData && (

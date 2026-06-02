@@ -41,6 +41,7 @@ export default function App() {
   const filteredEvents = events.filter((event) => event.date === selectedDate);
   const favoriteEvents = events.filter((event) => favorites.has(event.id));
   const [selectedCity, setSelectedCity] = useState<string>('nearby');
+  // Da scommentare per il filtro sulla città
   const [cityInput, setCityInput] = useState('');
   const [showCityModal, setShowCityModal] = useState(false);
 
@@ -51,6 +52,7 @@ export default function App() {
   const [travelMode, setTravelMode] = useState<google.maps.TravelMode | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
+  
   const applyCityFilter = (city: string) => {
     const cleanedCity = city.trim();
     
@@ -66,6 +68,8 @@ export default function App() {
     setSelectedCity('nearby');
     setCityInput('');
   };
+
+  
 
   const mapBackendEvents = (data: any[]): Event[] => {
     return data.map((event: any) => ({
@@ -86,12 +90,13 @@ export default function App() {
   const loadEventsByFilter = async () => {
     try {
       setIsEventsLoading(true);
-
+      
       if (selectedCity !== 'nearby') {
         const data = await getEventsByCity(selectedCity);
         setEvents(mapBackendEvents(data));
         return;
       }
+        
 
       if (!navigator.geolocation) {
         const data = await getPublicEvents();
@@ -129,6 +134,8 @@ export default function App() {
       }
     }
   };
+  
+
 
   // Load favorites from localStorage on mount
   useEffect(() => {
@@ -240,7 +247,6 @@ export default function App() {
       <div className="flex-1 overflow-hidden">
         {activeSection === 'home' && (
           <div className="relative h-full">
-            {/* DA SCOMMENTARE SE VOGLIO METTERE IL FILTRO CITTÀ NELLA MAPPA
             <div className="absolute top-4 left-4 right-4 z-40 flex gap-2">
               <button
                 onClick={() => setShowCityModal(true)}
@@ -260,7 +266,7 @@ export default function App() {
                 </button>
               )}
             </div>
-            */}
+            
 
             <MapView
               events={filteredEvents}
@@ -274,7 +280,6 @@ export default function App() {
         
         {activeSection === 'events' && (
           <div className="h-full overflow-y-auto pb-20">
-            {/* DA SCOMMENTARE SE VOGLIO METTERE IL FILTRO CITTÀ NELLA MAPPA
             <div className="p-4 bg-gray-50">
               <div className="bg-white rounded-2xl shadow-md p-4">
                 <label className="text-sm font-semibold text-gray-700">
@@ -307,7 +312,7 @@ export default function App() {
                 )}
               </div>
             </div>
-            */}
+            
             <EventsList
               events={events}
               favorites={favorites}
@@ -348,7 +353,6 @@ export default function App() {
         />
       )}
 
-{/* DA SCOMMENTARE SE VOGLIO METTERE IL FILTRO CITTÀ NELLA MAPPA
       {showCityModal && (
         <div className="fixed inset-0 z-[100] bg-black/40 flex items-center justify-center px-4">
           <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl p-5">
@@ -388,7 +392,7 @@ export default function App() {
           </div>
         </div>
       )}
-        */}
+        
     </div>
   );
 }

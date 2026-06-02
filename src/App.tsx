@@ -8,7 +8,7 @@ import { EventDetailModal } from './app/components/EventDetailModal';
 import type { Event } from './app/types/event';
 import { LoginView } from './app/components/LoginView';
 import { VenuesView } from './app/components/VenuesView';
-import { getPublicEvents } from './app/api/publicEvents';
+import { getPublicEvents, getNearbyEvents, getEventsByCity } from './app/api/publicEvents';
 
 // Login
 interface UserData {
@@ -40,6 +40,7 @@ export default function App() {
   const [isEventsLoading, setIsEventsLoading] = useState(true);
   const filteredEvents = events.filter((event) => event.date === selectedDate);
   const favoriteEvents = events.filter((event) => favorites.has(event.id));
+  const [selectedCity, setSelectedCity] = useState<string>('nearby');
 
   // Mappa
   const [navigationEvent, setNavigationEvent] = useState<Event | null>(null);
@@ -47,6 +48,51 @@ export default function App() {
     //Pop up
   const [travelMode, setTravelMode] = useState<google.maps.TravelMode | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+
+  const mapBackendEvents = (data: any[]): Event[] => {
+    return data.map((event: any) => ({
+      id: event.id,
+      title: event.title,
+      description: event.description,
+      date: event.date,
+      time: event.start_time,
+      venue: event.venue_name,
+      latitude: Number(event.latitude),
+      longitude: Number(event.longitude),
+      type: event.category || 'event',
+      price: event.price ? `€${event.price}` : 'Gratis',
+      image: event.image_url,
+    }));
+  };
+
+  const loadEventsByFilter = async () => {
+    try {
+      setIsEventsLoading(true);
+
+      if (selectedCity !== 'nearby') {
+        const data = await getEventsByCity(selectedCity);
+        setEvents(mapBackendEvents(data));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const data = await getNearbyEvents(
+            position.coords.latitude,
+            position.coords.longitude,
+            20
+          );
+          setEvents(mapBackendEvents(data));
+        },
+        async () => {
+          const data = await getPublicEvents();
+          setEvents(mapBackendEvents(data));
+        }
+      );
+    } finally {
+      setIsEventsLoading(false);
+    }
+  };
 
   // Load favorites from localStorage on mount
   useEffect(() => {
@@ -75,34 +121,72 @@ export default function App() {
     }
   }, [userData]);
 
-    // use effect per gli eventi 
+  // use effect per gli eventi
   useEffect(() => {
+    const mapBackendEvents = (data: any[]): Event[] => {
+      return data.map((event: any) => ({
+        id: event.id,
+        title: event.title,
+        description: event.description,
+
+        date: event.date,
+        time: event.start_time,
+
+        venue: event.venue_name,
+
+        latitude: Number(event.latitude),
+        longitude: Number(event.longitude),
+
+        type: event.category || 'event',
+        price: event.price ? `€${event.price}` : 'Gratis',
+        image: event.image_url,
+      }));
+    };
+
+    const loadAllEvents = async () => {
+      const data = await getPublicEvents();
+      setEvents(mapBackendEvents(data));
+    };
+
+    const loadNearbyEvents = async (
+      lat: number,
+      lng: number,
+      radiusKm = 20
+    ) => {
+      const data = await getNearbyEvents(lat, lng, radiusKm);
+      setEvents(mapBackendEvents(data));
+    };
+
     const loadEvents = async () => {
       try {
-        const data = await getPublicEvents();
+        setIsEventsLoading(true);
 
-        const mappedEvents = data.map((event: any) => ({
-            id: event.id,
-            title: event.title,
-            description: event.description,
-                  
-            date: event.date,
-            time: event.start_time,
-                  
-            venue: event.venue_name,
-                  
-            latitude: Number(event.latitude),
-            longitude: Number(event.longitude),
-                  
-            type: event.category || 'event',
-            price: event.price ? `€${event.price}` : 'Gratis',
-            image: event.image_url,
-        }));
+        if (!navigator.geolocation) {
+          await loadAllEvents();
+          return;
+        }
 
-        setEvents(mappedEvents);
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            await loadNearbyEvents(
+              position.coords.latitude,
+              position.coords.longitude,
+              20
+            );
+            setIsEventsLoading(false);
+          },
+          async () => {
+            await loadAllEvents();
+            setIsEventsLoading(false);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 8000,
+            maximumAge: 60000,
+          }
+        );
       } catch (error) {
         console.error(error);
-      } finally {
         setIsEventsLoading(false);
       }
     };
@@ -112,6 +196,11 @@ export default function App() {
     }
   }, [isLoggedIn]);
 
+  useEffect(() => {
+    if (isLoggedIn) {
+      loadEventsByFilter();
+    }
+  }, [isLoggedIn, selectedCity]);
 
   const toggleFavorite = (eventId: string) => {
     setFavorites((prev) => {

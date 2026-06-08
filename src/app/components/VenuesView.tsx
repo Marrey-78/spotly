@@ -64,6 +64,7 @@ export function VenuesView() {
     image_url: '',
   });
 
+  
   const [formData, setFormData] = useState({
     venue_type_id: '',
     name: '',
@@ -107,6 +108,33 @@ export function VenuesView() {
     loadData();
   }, []);
 
+  const resetVenueForm = () => {
+    setFormData({
+      venue_type_id: venueTypes[0]?.id || '',
+      name: '',
+      description: '',
+      address: '',
+      city: '',
+      phone: '',
+      email: '',
+      website_url: '',
+      instagram_url: '',
+      image_url: '',
+    });
+  };
+
+  const resetOrganizerForm = () => {
+    setOrganizerFormData({
+      name: '',
+      description: '',
+      phone: '',
+      email: '',
+      website_url: '',
+      instagram_url: '',
+      image_url: '',
+    });
+  };
+
   const handleCreateVenue = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -132,18 +160,7 @@ export function VenuesView() {
 
       setEditingVenue(null);
 
-    setFormData({
-      venue_type_id: venueTypes[0]?.id || '',
-      name: '',
-      description: '',
-      address: '',
-      city: '',
-      phone: '',
-      email: '',
-      website_url: '',
-      instagram_url: '',
-      image_url: '',
-    });
+      resetVenueForm();
 
       setShowForm(false);
       await loadData();
@@ -168,10 +185,10 @@ export function VenuesView() {
       alert('Errore durante eliminazione locale');
     }
   };
-
+  
   const handleCreateOrganizer = async (e: React.FormEvent) => {
     e.preventDefault();
-      
+  
     try {
       const payload = {
         name: organizerFormData.name,
@@ -182,30 +199,20 @@ export function VenuesView() {
         instagram_url: organizerFormData.instagram_url || undefined,
         image_url: organizerFormData.image_url || undefined,
       };
-      
+    
       if (editingOrganizer) {
         await updateOrganizer(editingOrganizer.id, payload);
       } else {
         await createOrganizer(payload);
       }
-      
+    
       setEditingOrganizer(null);
-    
-      setOrganizerFormData({
-        name: '',
-        description: '',
-        phone: '',
-        email: '',
-        website_url: '',
-        instagram_url: '',
-        image_url: '',
-      });
-    
+      resetOrganizerForm();
       setShowOrganizerForm(false);
       await loadData();
     } catch (error) {
       console.error(error);
-      alert('Errore durante la creazione organizzatore');
+      alert('Errore durante il salvataggio organizzatore');
     }
   };
 
@@ -241,7 +248,7 @@ export function VenuesView() {
 
   const startEditVenue = (venue: Venue) => {
     setEditingVenue(venue);
-  
+
     setFormData({
       venue_type_id: venue.venue_type_id || venueTypes[0]?.id || '',
       name: venue.name || '',
@@ -320,7 +327,11 @@ export function VenuesView() {
           <>    
         {!showForm && (
           <Button
-            onClick={() => setShowForm(true)}
+           onClick={() => {
+                setEditingVenue(null);
+                resetVenueForm();
+                setShowForm(true);
+              }}
             className="w-full h-12 rounded-xl bg-indigo-600 text-white font-semibold mb-6"
           >
             <Plus className="w-5 h-5 mr-2" />
@@ -419,7 +430,11 @@ export function VenuesView() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  setEditingVenue(null);
+                  resetVenueForm();
+                  setShowForm(false);
+                }}
                 className="flex-1 h-12 rounded-xl"
               >
                 Annulla
@@ -621,7 +636,11 @@ export function VenuesView() {
         
           {!showOrganizerForm && (
             <Button
-              onClick={() => setShowOrganizerForm(true)}
+              onClick={() => {
+                setEditingOrganizer(null);
+                resetOrganizerForm();
+                setShowOrganizerForm(true);
+              }}
               className="w-full h-12 rounded-xl bg-indigo-600 text-white font-semibold mb-6"
             >
               + Crea organizzatore
@@ -720,7 +739,9 @@ export function VenuesView() {
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    setEditingOrganizer(null);
+                      setEditingOrganizer(null);
+                      resetOrganizerForm();
+                      setShowOrganizerForm(false);
                   }}
                   className="flex-1 h-12 rounded-xl"
                 >
@@ -811,7 +832,10 @@ export function VenuesView() {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => setEditingOrganizer(null)}
+                          onClick={() => {
+                            setEditingOrganizer(null);
+                            resetOrganizerForm();
+                          }}
                           className="flex-1"
                         >
                           Annulla

@@ -9,6 +9,8 @@ import type { Event } from './app/types/event';
 import { LoginView } from './app/components/LoginView';
 import { VenuesView } from './app/components/VenuesView';
 import { getPublicEvents, getNearbyEvents, getEventsByCity } from './app/api/publicEvents';
+import { getFavoriteEvents, addFavoriteEvent, removeFavoriteEvent, getFavoriteVenues, addFavoriteVenue, removeFavoriteVenue,
+  getFavoriteOrganizers, addFavoriteOrganizer, removeFavoriteOrganizer} from './app/api/favorites';
 
 // Login
 interface UserData {
@@ -51,6 +53,12 @@ export default function App() {
     //Pop up
   const [travelMode, setTravelMode] = useState<google.maps.TravelMode | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+
+  //Preferiti 
+  const [favoriteVenues, setFavoriteVenues] = useState<any[]>([]);
+  const [favoriteOrganizers, setFavoriteOrganizers] = useState<any[]>([]);
+  const [venueFavorites, setVenueFavorites] = useState<Set<string>>(new Set());
+  const [organizerFavorites, setOrganizerFavorites] = useState<Set<string>>(new Set());
 
   
   const applyCityFilter = (city: string) => {
@@ -134,15 +142,20 @@ export default function App() {
       }
     }
   };
+
+  const loadFavoriteEvents = async () => {
+    try {
+      const data = await getFavoriteEvents();
+      setFavorites(new Set(data.map((event: any) => event.id)));
+    } catch (error) {
+      console.error('Errore caricamento preferiti:', error);
+    }
+  };
   
 
 
   // Load favorites from localStorage on mount
   useEffect(() => {
-    const storedFavorites = localStorage.getItem('favorites');
-    if (storedFavorites) {
-      setFavorites(new Set(JSON.parse(storedFavorites)));
-    }
     
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('userData');
@@ -152,10 +165,6 @@ export default function App() {
     }
   }, []);
 
-  // Save favorites to localStorage when they change
-  useEffect(() => {
-    localStorage.setItem('favorites', JSON.stringify(Array.from(favorites)));
-  }, [favorites]);
 
   // Save user data to localStorage when it changes
   useEffect(() => {
@@ -168,19 +177,37 @@ export default function App() {
   useEffect(() => {
     if (isLoggedIn) {
       loadEventsByFilter();
+      loadFavoriteEvents();
+      loadVenueFavorites();
+      loadOrganizerFavorites();
     }
   }, [isLoggedIn, selectedCity]);
 
-  const toggleFavorite = (eventId: string) => {
-    setFavorites((prev) => {
-      const newFavorites = new Set(prev);
-      if (newFavorites.has(eventId)) {
-        newFavorites.delete(eventId);
+  const toggleFavorite = async (eventId: string) => {
+    try {
+      const isFavorite = favorites.has(eventId);
+    
+      if (isFavorite) {
+        await removeFavoriteEvent(eventId);
+      
+        setFavorites((prev) => {
+          const next = new Set(prev);
+          next.delete(eventId);
+          return next;
+        });
       } else {
-        newFavorites.add(eventId);
+        await addFavoriteEvent(eventId);
+      
+        setFavorites((prev) => {
+          const next = new Set(prev);
+          next.add(eventId);
+          return next;
+        });
       }
-      return newFavorites;
-    });
+    } catch (error) {
+      console.error('Errore aggiornamento preferito:', error);
+      alert('Errore aggiornamento preferito');
+    }
   };
 
   const handleEventClick = (event: Event) => {
@@ -233,7 +260,77 @@ export default function App() {
     setTravelMode(null);
   };
 
+  const loadVenueFavorites = async () => {
+    try {
+      const data = await getFavoriteVenues();
+      setFavoriteVenues(data);
+      setVenueFavorites(new Set(data.map((venue: any) => venue.id)));
+    } catch (error) {
+      console.error('Errore caricamento locali preferiti:', error);
+    }
+  };
 
+  const loadOrganizerFavorites = async () => {
+    try {
+      const data = await getFavoriteOrganizers();
+      setFavoriteOrganizers(data);
+      setOrganizerFavorites(new Set(data.map((organizer: any) => organizer.id)));
+    } catch (error) {
+      console.error('Errore caricamento organizzazioni preferite:', error);
+    }
+  };
+
+  const toggleVenueFavorite = async (venueId: string) => {
+    try {
+      const isFavorite = venueFavorites.has(venueId);
+
+      if (isFavorite) {
+        await removeFavoriteVenue(venueId);
+
+        setVenueFavorites((prev) => {
+          const next = new Set(prev);
+          next.delete(venueId);
+          return next;
+        });
+
+        setFavoriteVenues((prev) =>
+          prev.filter((venue) => venue.id !== venueId)
+        );
+      } else {
+        await addFavoriteVenue(venueId);
+        await loadVenueFavorites();
+      }
+    } catch (error) {
+      console.error('Errore aggiornamento locale preferito:', error);
+      alert('Errore aggiornamento locale preferito');
+    }
+  };
+
+  const toggleOrganizerFavorite = async (organizerId: string) => {
+    try {
+      const isFavorite = organizerFavorites.has(organizerId);
+
+      if (isFavorite) {
+        await removeFavoriteOrganizer(organizerId);
+
+        setOrganizerFavorites((prev) => {
+          const next = new Set(prev);
+          next.delete(organizerId);
+          return next;
+        });
+
+        setFavoriteOrganizers((prev) =>
+          prev.filter((organizer) => organizer.id !== organizerId)
+        );
+      } else {
+        await addFavoriteOrganizer(organizerId);
+        await loadOrganizerFavorites();
+      }
+    } catch (error) {
+      console.error('Errore aggiornamento organizzazione preferita:', error);
+      alert('Errore aggiornamento organizzazione preferita');
+    }
+  };
 
 
   return (
@@ -335,6 +432,13 @@ export default function App() {
             userData={userData}
             onLogout={handleLogout}
             onUpdateProfile={handleUpdateProfile}
+            favoritesCount={favorites.size}
+            favoriteVenues={favoriteVenues}
+            favoriteOrganizers={favoriteOrganizers}
+            venueFavorites={venueFavorites}
+            organizerFavorites={organizerFavorites}
+            onToggleVenueFavorite={toggleVenueFavorite}
+            onToggleOrganizerFavorite={toggleOrganizerFavorite}
           />
         )}
         {activeSection === 'venues' && userData?.role === 'venue_owner' && (

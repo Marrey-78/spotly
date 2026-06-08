@@ -14,16 +14,30 @@ interface ProfileViewProps {
   userData: { name: string; email: string; avatar: string };
   onLogout: () => void;
   onUpdateProfile: (data: { name: string; email: string }) => void;
+  favoritesCount?: number;
+  favoriteVenues: any[];
+  favoriteOrganizers: any[];
+  venueFavorites: Set<string>;
+  organizerFavorites: Set<string>;
+  onToggleVenueFavorite: (venueId: string) => void;
+  onToggleOrganizerFavorite: (organizerId: string) => void;
 }
 
 export function ProfileView({ 
-  favoriteEvents, 
-  favorites, 
-  onToggleFavorite, 
+  favoriteEvents,
+  favoriteVenues,
+  favoriteOrganizers,
+  favorites,
+  venueFavorites,
+  organizerFavorites,
+  onToggleFavorite,
+  onToggleVenueFavorite,
+  onToggleOrganizerFavorite,
   onEventClick,
   userData,
   onLogout,
-  onUpdateProfile
+  onUpdateProfile,
+  favoritesCount,
 }: ProfileViewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
@@ -52,6 +66,17 @@ export function ProfileView({
   }, {} as Record<string, number>);
   
   const favoriteType = Object.entries(eventsByType).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Nessuno';
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const upcomingFavoriteEvents = favoriteEvents.filter(
+    (event) => event.date >= today
+  );
+
+  const pastFavoriteEvents = favoriteEvents.filter(
+    (event) => event.date < today
+  );
+
 
   return (
     <div className="h-full overflow-y-auto scrollbar-hide pb-20 bg-gradient-to-b from-gray-50 to-white">
@@ -82,7 +107,7 @@ export function ProfileView({
                 <p className="text-indigo-100 text-sm">{userData.email}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <Star className="w-4 h-4 fill-yellow-300 text-yellow-300" />
-                  <span className="text-sm font-medium">VIP Member</span>
+                  <span className="text-sm font-medium">Utente</span>
                 </div>
               </div>
             </div>
@@ -101,7 +126,7 @@ export function ProfileView({
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/20">
               <Heart className="w-6 h-6 mx-auto mb-2 fill-white text-white" />
-              <p className="text-2xl font-bold">{favoriteEvents.length}</p>
+              <p className="text-2xl font-bold">  {favoritesCount ?? favoriteEvents.length + favoriteVenues.length +favoriteOrganizers.length} </p>
               <p className="text-xs text-white/80">Preferiti</p>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/20">
@@ -146,33 +171,158 @@ export function ProfileView({
           </TabsList>
 
           {/* Tab Preferiti */}
-          <TabsContent value="favorites" className="space-y-4">
-            {favoriteEvents.length === 0 ? (
-              <div className="bg-white rounded-2xl p-12 text-center shadow-sm">
-                <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Heart className="w-10 h-10 text-indigo-600" />
+          <TabsContent value="favorites" className="space-y-5">
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Prossimi eventi
+                </h3>
+                <span className="text-sm text-gray-500">
+                  {upcomingFavoriteEvents.length}
+                </span>
+              </div>
+
+              {upcomingFavoriteEvents.length === 0 ? (
+                <p className="text-gray-500 text-sm">
+                  Nessun evento futuro salvato.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {upcomingFavoriteEvents.map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      isFavorite={favorites.has(event.id)}
+                      onToggleFavorite={onToggleFavorite}
+                      onEventClick={onEventClick}
+                    />
+                  ))}
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Nessun evento salvato</h3>
-                <p className="text-gray-600 mb-1">
-                  Scopri gli eventi più cool e salvali nei preferiti
-                </p>
-                <p className="text-sm text-gray-500">
-                  Tocca il cuore ❤️ su un evento per aggiungerlo qui
-                </p>
+              )}
+            </div>
+            
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Locali preferiti
+                </h3>
+                <span className="text-sm text-gray-500">
+                  {favoriteVenues.length}
+                </span>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {favoriteEvents.map((event) => (
-                  <EventCard
-                    key={event.id}
-                    event={event}
-                    isFavorite={favorites.has(event.id)}
-                    onToggleFavorite={onToggleFavorite}
-                    onEventClick={onEventClick}
-                  />
-                ))}
+            
+              {favoriteVenues.length === 0 ? (
+                <p className="text-gray-500 text-sm">
+                  Nessun locale preferito.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {favoriteVenues.map((venue) => (
+                    <div
+                      key={venue.id}
+                      className="rounded-xl border border-gray-100 p-3"
+                    >
+                      <div className="flex justify-between gap-3">
+                        <div>
+                          <h4 className="font-bold text-gray-900">
+                            {venue.name}
+                          </h4>
+                          <p className="text-sm text-indigo-600">
+                            {venue.venue_type_name}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {venue.address}
+                            {venue.city ? `, ${venue.city}` : ''}
+                          </p>
+                        </div>
+                  
+                        <button
+                          onClick={() => onToggleVenueFavorite(venue.id)}
+                          className="text-red-500 text-xl"
+                        >
+                          ❤️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Organizzazioni preferite
+                </h3>
+                <span className="text-sm text-gray-500">
+                  {favoriteOrganizers.length}
+                </span>
               </div>
-            )}
+            
+              {favoriteOrganizers.length === 0 ? (
+                <p className="text-gray-500 text-sm">
+                  Nessuna organizzazione preferita.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {favoriteOrganizers.map((organizer) => (
+                    <div
+                      key={organizer.id}
+                      className="rounded-xl border border-gray-100 p-3"
+                    >
+                      <div className="flex justify-between gap-3">
+                        <div>
+                          <h4 className="font-bold text-gray-900">
+                            {organizer.name}
+                          </h4>
+                          {organizer.description && (
+                            <p className="text-sm text-gray-600 mt-1">
+                              {organizer.description}
+                            </p>
+                          )}
+                        </div>
+                        
+                        <button
+                          onClick={() => onToggleOrganizerFavorite(organizer.id)}
+                          className="text-red-500 text-xl"
+                        >
+                          ❤️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-gray-900">
+                  Eventi passati
+                </h3>
+                <span className="text-sm text-gray-500">
+                  {pastFavoriteEvents.length}
+                </span>
+              </div>
+            
+              {pastFavoriteEvents.length === 0 ? (
+                <p className="text-gray-500 text-sm">
+                  Nessun evento passato.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {pastFavoriteEvents.map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      isFavorite={favorites.has(event.id)}
+                      onToggleFavorite={onToggleFavorite}
+                      onEventClick={onEventClick}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </TabsContent>
 
           {/* Tab Statistiche */}
@@ -327,7 +477,7 @@ export function ProfileView({
                     <MapPin className="w-5 h-5 text-gray-400" />
                     <div>
                       <p className="font-medium text-gray-900">Posizione</p>
-                      <p className="text-sm text-gray-600">Milano, Italia</p>
+                      <p className="text-sm text-gray-600">Non impostata</p>
                     </div>
                   </div>
                   <Button variant="ghost" size="sm" className="text-indigo-600">

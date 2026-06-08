@@ -227,7 +227,6 @@ export function VenuesView() {
 
   const startEditOrganizer = (organizer: Organizer) => {
     setEditingOrganizer(organizer);
-    setShowOrganizerForm(true);
 
     setOrganizerFormData({
       name: organizer.name || '',
@@ -242,7 +241,6 @@ export function VenuesView() {
 
   const startEditVenue = (venue: Venue) => {
     setEditingVenue(venue);
-    setShowForm(true);
   
     setFormData({
       venue_type_id: venue.venue_type_id || venueTypes[0]?.id || '',
@@ -449,73 +447,158 @@ export function VenuesView() {
           </div>
         ) : (
           <div className="space-y-4">
-            {venues.map((venue) => (
-              <div
-                key={venue.id}
-                className="bg-white rounded-2xl shadow-md overflow-hidden"
-              >
-                <div className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h2 className="text-lg font-bold text-gray-900">
-                        {venue.name}
-                      </h2>
-                      <p className="text-sm text-indigo-600 font-medium">
-                        {venue.venue_type_name}
-                      </p>
-                    </div>
+            {venues.map((venue) => {
+              const isEditing = editingVenue?.id === venue.id;
 
-                    <Store className="w-6 h-6 text-gray-400" />
-                  </div>
-
-                  {venue.description && (
-                    <p className="text-gray-600 text-sm mt-3">
-                      {venue.description}
-                    </p>
-                  )}
-
-                  <div className="mt-4 space-y-2 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4" />
-                      <span>
-                        {venue.address}
-                        {venue.city ? `, ${venue.city}` : ''}
-                      </span>
-                    </div>
-
-                    {venue.phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-4 h-4" />
-                        <span>{venue.phone}</span>
-                      </div>
-                    )}
-
-                    {venue.instagram_url && (
-                      <div className="flex items-center gap-2">
-                        <Instagram className="w-4 h-4" />
-                        <span>{venue.instagram_url}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <Button
-                    onClick={() => setSelectedVenue(venue)}
-                    className="w-full mt-4 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-                    variant="ghost"
-                  >
-                    Gestisci eventi
-                  </Button>
-
-                  <Button
-                    onClick={() => startEditVenue(venue)}
-                    className="w-full mt-2 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-                    variant="ghost"
-                  >
-                    <Pencil className="w-4 h-4 mr-2" />
-                    Modifica locale
-                  </Button>
+              return (
+                <div
+                  key={venue.id}
+                  className="bg-white rounded-2xl shadow-md overflow-hidden"
+                >
                   
-                  <Button
+                {isEditing ? (
+                                  
+                  <form
+                    onSubmit={handleCreateVenue}
+                    className="p-4 space-y-4"
+                  >
+                    <Input
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      placeholder="Nome locale"
+                      required
+                    />
+
+                    <Input
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({ ...formData, description: e.target.value })
+                      }
+                      placeholder="Descrizione"
+                    />
+
+                    <Input
+                      value={formData.address}
+                      onChange={(e) =>
+                        setFormData({ ...formData, address: e.target.value })
+                      }
+                      placeholder="Indirizzo"
+                      required
+                    />
+
+                    <Input
+                      value={formData.city}
+                      onChange={(e) =>
+                        setFormData({ ...formData, city: e.target.value })
+                      }
+                      placeholder="Città"
+                      required
+                    />
+
+                    <Input
+                      value={formData.phone}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: e.target.value })
+                      }
+                      placeholder="Telefono"
+                    />
+
+                    <Input
+                      value={formData.instagram_url}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          instagram_url: e.target.value,
+                        })
+                      }
+                      placeholder="Instagram"
+                    />
+
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setEditingVenue(null)}
+                        className="flex-1"
+                      >
+                        Annulla
+                      </Button>
+                    
+                      <Button
+                        type="submit"
+                        className="flex-1 bg-indigo-600 text-white"
+                      >
+                        Salva modifiche
+                      </Button>
+                    </div>
+                  </form>
+
+                ) : (
+                
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h2 className="text-lg font-bold text-gray-900">
+                          {venue.name}
+                        </h2>
+                        <p className="text-sm text-indigo-600 font-medium">
+                          {venue.venue_type_name}
+                        </p>
+                      </div>
+
+                      <Store className="w-6 h-6 text-gray-400" />
+                    </div>
+
+                    {venue.description && (
+                      <p className="text-gray-600 text-sm mt-3">
+                        {venue.description}
+                      </p>
+                    )}
+
+                    <div className="mt-4 space-y-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        <span>
+                          {venue.address}
+                          {venue.city ? `, ${venue.city}` : ''}
+                        </span>
+                      </div>
+                  
+                      {venue.phone && (
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4" />
+                          <span>{venue.phone}</span>
+                        </div>
+                      )}
+
+                      {venue.instagram_url && (
+                        <div className="flex items-center gap-2">
+                          <Instagram className="w-4 h-4" />
+                          <span>{venue.instagram_url}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <Button
+                      onClick={() => setSelectedVenue(venue)}
+                      className="w-full mt-4 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                      variant="ghost"
+                    >
+                      Gestisci eventi
+                    </Button>
+                    
+                    <Button
+                      onClick={() => startEditVenue(venue)}
+                      className="w-full mt-2 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                      variant="ghost"
+                    >
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Modifica locale
+                    </Button>
+                    
+                    <Button
                       onClick={() => handleDeleteVenue(venue.id)}
                       className="w-full mt-2 h-11 rounded-xl bg-red-50 text-red-600 hover:bg-red-100"
                       variant="ghost"
@@ -523,9 +606,12 @@ export function VenuesView() {
                       <Trash2 className="w-4 h-4 mr-2" />
                       Elimina locale
                     </Button>
+                  </div>
+
+                )}
                 </div>
-              </div>
-            ))}
+              );
+        })}
           </div>
         )}
         </>
@@ -635,7 +721,6 @@ export function VenuesView() {
                   variant="outline"
                   onClick={() => {
                     setEditingOrganizer(null);
-                    setShowOrganizerForm(false);
                   }}
                   className="flex-1 h-12 rounded-xl"
                 >
@@ -663,55 +748,133 @@ export function VenuesView() {
             </div>
           ) : (
             <div className="space-y-4">
-              {organizers.map((organizer) => (
-                <div
-                  key={organizer.id}
-                  className="bg-white rounded-2xl shadow-md overflow-hidden"
-                >
-                  <div className="p-4">
-                    <h2 className="text-lg font-bold text-gray-900">
-                      {organizer.name}
-                    </h2>
-              
-                    {organizer.description && (
-                      <p className="text-gray-600 text-sm mt-2">
-                        {organizer.description}
-                      </p>
-                    )}
+              {organizers.map((organizer) => {
+                const isEditingOrganizer = editingOrganizer?.id === organizer.id;
 
-                    {organizer.phone && (
-                      <p className="text-gray-600 text-sm mt-2">
-                        {organizer.phone}
-                      </p>
-                    )}
+                return (  
+                  <div
+                    key={organizer.id}
+                    className="bg-white rounded-2xl shadow-md overflow-hidden"
+                  >
+                  {isEditingOrganizer ? (
 
-                    <Button
-                      onClick={() => setSelectedOrganizer(organizer)}
-                      className="w-full mt-4 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-                      variant="ghost"
+                    <form
+                      onSubmit={handleCreateOrganizer}
+                      className="p-4 space-y-4"
                     >
-                      Gestisci eventi
-                    </Button>
+                      <Input
+                        value={organizerFormData.name}
+                        onChange={(e) =>
+                          setOrganizerFormData({
+                            ...organizerFormData,
+                            name: e.target.value,
+                          })
+                        }
+                        placeholder="Nome organizzatore"
+                        required
+                      />
 
-                    <Button
-                      onClick={() => startEditOrganizer(organizer)}
-                      className="w-full mt-2 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-                      variant="ghost"
-                    >
-                      <Pencil className="w-4 h-4 mr-2" />
-                      Modifica organizzatore
-                    </Button>
+                      <Input
+                        value={organizerFormData.description}
+                        onChange={(e) =>
+                          setOrganizerFormData({
+                            ...organizerFormData,
+                            description: e.target.value,
+                          })
+                        }
+                        placeholder="Descrizione"
+                      />
+
+                      <Input
+                        value={organizerFormData.phone}
+                        onChange={(e) =>
+                          setOrganizerFormData({
+                            ...organizerFormData,
+                            phone: e.target.value,
+                          })
+                        }
+                        placeholder="Telefono"
+                      />
+
+                      <Input
+                        value={organizerFormData.instagram_url}
+                        onChange={(e) =>
+                          setOrganizerFormData({
+                            ...organizerFormData,
+                            instagram_url: e.target.value,
+                          })
+                        }
+                        placeholder="Instagram"
+                      />
+
+                      <div className="flex gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setEditingOrganizer(null)}
+                          className="flex-1"
+                        >
+                          Annulla
+                        </Button>
+                      
+                        <Button
+                          type="submit"
+                          className="flex-1 bg-indigo-600 text-white"
+                        >
+                          Salva modifiche
+                        </Button>
+                      </div>
+                    </form>
+
+                  ) : (
                   
-                    <Button
-                      onClick={() => handleDeleteOrganizer(organizer.id)}
-                      className="w-full mt-2 h-11 rounded-xl bg-red-50 text-red-600 hover:bg-red-100"
-                      variant="ghost"
-                    >
-                      Elimina organizzatore
-                    </Button>
+                    <div className="p-4">
+                      <h2 className="text-lg font-bold text-gray-900">
+                        {organizer.name}
+                      </h2>
+                  
+                      {organizer.description && (
+                        <p className="text-gray-600 text-sm mt-2">
+                          {organizer.description}
+                        </p>
+                      )}
+
+                      {organizer.phone && (
+                        <p className="text-gray-600 text-sm mt-2">
+                          {organizer.phone}
+                        </p>
+                      )}
+
+                      <Button
+                        onClick={() => setSelectedOrganizer(organizer)}
+                        className="w-full mt-4 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                        variant="ghost"
+                      >
+                        Gestisci eventi
+                      </Button>
+                    
+                      <Button
+                        onClick={() => startEditOrganizer(organizer)}
+                        className="w-full mt-2 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                        variant="ghost"
+                      >
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Modifica organizzatore
+                      </Button>
+                    
+                      <Button
+                        onClick={() => handleDeleteOrganizer(organizer.id)}
+                        className="w-full mt-2 h-11 rounded-xl bg-red-50 text-red-600 hover:bg-red-100"
+                        variant="ghost"
+                      >
+                        Elimina organizzatore
+                      </Button>
+                    </div>
+
+                  )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </>

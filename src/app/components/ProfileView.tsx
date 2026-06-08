@@ -1,35 +1,46 @@
 import { Heart, User, Settings, LogOut, Calendar, MapPin, Star, Trophy, Edit2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import type { Event } from '../types/event';
 import { EventCard } from './EventCard';
 import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Input } from './ui/input';
-import { useState } from 'react';
+import { changeMyPassword, uploadMyAvatar } from '../api/users';
 
 interface ProfileViewProps {
   favoriteEvents: Event[];
   favorites: Set<string>;
   onToggleFavorite: (eventId: string) => void;
   onEventClick: (event: Event) => void;
-  userData: { name: string; email: string; avatar: string };
+  userData: {
+    name: string;
+    email: string;
+    avatar?: string;
+    city?: string;
+  };
   onLogout: () => void;
-  onUpdateProfile: (data: { name: string; email: string }) => void;
   favoritesCount?: number;
+
   favoriteVenues: any[];
   favoriteOrganizers: any[];
   venueFavorites: Set<string>;
   organizerFavorites: Set<string>;
   onToggleVenueFavorite: (venueId: string) => void;
   onToggleOrganizerFavorite: (organizerId: string) => void;
+
+  onUpdateProfile: (data: {
+    name: string;
+    email: string;
+    city?: string;
+    avatar?: string;
+  }) => Promise<void>;
 }
 
-export function ProfileView({ 
+export function ProfileView({
   favoriteEvents,
   favoriteVenues,
   favoriteOrganizers,
   favorites,
-  venueFavorites,
-  organizerFavorites,
   onToggleFavorite,
   onToggleVenueFavorite,
   onToggleOrganizerFavorite,
@@ -39,50 +50,96 @@ export function ProfileView({
   onUpdateProfile,
   favoritesCount,
 }: ProfileViewProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({
-    name: userData.name,
-    email: userData.email,
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    name: userData?.name || '',
+    email: userData?.email || '',
+    city: userData?.city || '',
+    avatar: userData?.avatar || '',
   });
 
-  const handleSaveProfile = () => {
-    onUpdateProfile(editData);
-    setIsEditing(false);
-  };
+  const [passwordForm, setPasswordForm] = useState({
+    old_password: '',
+    new_password: '',
+  });
 
-  const handleCancelEdit = () => {
-    setEditData({ name: userData.name, email: userData.email });
-    setIsEditing(false);
-  };
+  useEffect(() => {
+    setProfileForm({
+      name: userData?.name || '',
+      email: userData?.email || '',
+      city: userData?.city || '',
+      avatar: userData?.avatar || '',
+    });
+  }, [userData]);
 
-  // Calcola statistiche
-  const upcomingEvents = favoriteEvents.filter(e => new Date(e.date) >= new Date()).length;
-  const pastEvents = favoriteEvents.filter(e => new Date(e.date) < new Date()).length;
-  
-  // Conta eventi per tipo
+  const today = new Date().toISOString().split('T')[0];
+
+  const upcomingFavoriteEvents = favoriteEvents.filter((event) => event.date >= today);
+  const pastFavoriteEvents = favoriteEvents.filter((event) => event.date < today);
+
+  const upcomingEvents = upcomingFavoriteEvents.length;
+  const pastEvents = pastFavoriteEvents.length;
+
   const eventsByType = favoriteEvents.reduce((acc, event) => {
     acc[event.type] = (acc[event.type] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
-  
+
   const favoriteType = Object.entries(eventsByType).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Nessuno';
 
-  const today = new Date().toISOString().split('T')[0];
+  const totalFavorites =
+    (favoritesCount ?? favoriteEvents.length) +
+    favoriteVenues.length +
+    favoriteOrganizers.length;
 
-  const upcomingFavoriteEvents = favoriteEvents.filter(
-    (event) => event.date >= today
-  );
+  const handleAvatarUpload = async (file: File) => {
+    try {
+      const result = await uploadMyAvatar(file);
+      setProfileForm((prev) => ({ ...prev, avatar: result.avatar }));
+    } catch (error) {
+      console.error(error);
+      alert('Errore caricamento immagine profilo');
+    }
+  };
 
-  const pastFavoriteEvents = favoriteEvents.filter(
-    (event) => event.date < today
-  );
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
+    try {
+      await onUpdateProfile(profileForm);
+      setIsEditingProfile(false);
+    } catch (error) {
+      console.error(error);
+      alert('Errore aggiornamento profilo');
+    }
+  };
+
+  const handleCancelProfileEdit = () => {
+    setProfileForm({
+      name: userData?.name || '',
+      email: userData?.email || '',
+      city: userData?.city || '',
+      avatar: userData?.avatar || '',
+    });
+    setIsEditingProfile(false);
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      await changeMyPassword(passwordForm);
+      setPasswordForm({ old_password: '', new_password: '' });
+      alert('Password aggiornata');
+    } catch (error) {
+      console.error(error);
+      alert('Errore cambio password');
+    }
+  };
 
   return (
     <div className="h-full overflow-y-auto scrollbar-hide pb-20 bg-gradient-to-b from-gray-50 to-white">
-      {/* Header con profilo utente */}
       <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white pt-8 pb-24 relative overflow-hidden">
-        {/* Background pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-white rounded-full blur-3xl"></div>
@@ -91,42 +148,35 @@ export function ProfileView({
         <div className="relative z-10 px-6">
           <div className="flex items-start justify-between mb-6">
             <div className="flex items-center gap-4">
-              {/* Avatar */}
               <div className="relative">
-                <img 
-                  src={userData.avatar} 
+                <img
+                  src={userData.avatar || 'https://ui-avatars.com/api/?name=User&background=6366f1&color=fff'}
                   alt={userData.name}
-                  className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border-4 border-white/30"
+                  className="w-20 h-20 rounded-full object-cover bg-white/20 backdrop-blur-sm border-4 border-white/30"
                 />
                 <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-green-400 rounded-full border-4 border-indigo-600"></div>
               </div>
-              
-              {/* User info */}
+
               <div>
                 <h2 className="text-2xl font-bold mb-1">{userData.name}</h2>
                 <p className="text-indigo-100 text-sm">{userData.email}</p>
+                <p className="text-indigo-100 text-sm mt-1">{userData.city || 'Città non impostata'}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <Star className="w-4 h-4 fill-yellow-300 text-yellow-300" />
                   <span className="text-sm font-medium">Utente</span>
                 </div>
               </div>
             </div>
-            
-            <Button
-              onClick={onLogout}
-              variant="ghost"
-              size="icon"
-              className="text-white hover:bg-white/20"
-            >
+
+            <Button onClick={onLogout} variant="ghost" size="icon" className="text-white hover:bg-white/20">
               <LogOut className="w-5 h-5" />
             </Button>
           </div>
 
-          {/* Stats cards */}
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/20">
               <Heart className="w-6 h-6 mx-auto mb-2 fill-white text-white" />
-              <p className="text-2xl font-bold">  {favoritesCount ?? favoriteEvents.length + favoriteVenues.length +favoriteOrganizers.length} </p>
+              <p className="text-2xl font-bold">{totalFavorites}</p>
               <p className="text-xs text-white/80">Preferiti</p>
             </div>
             <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/20">
@@ -143,49 +193,32 @@ export function ProfileView({
         </div>
       </div>
 
-      {/* Content con Tabs */}
       <div className="px-6 -mt-16 relative z-20">
         <Tabs defaultValue="favorites" className="w-full">
           <TabsList className="w-full bg-white shadow-lg rounded-2xl p-1 h-14 mb-6">
-            <TabsTrigger 
-              value="favorites" 
-              className="flex-1 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
-            >
+            <TabsTrigger value="favorites" className="flex-1 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
               <Heart className="w-4 h-4 mr-2" />
               Preferiti
             </TabsTrigger>
-            <TabsTrigger 
-              value="stats"
-              className="flex-1 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
-            >
+            <TabsTrigger value="stats" className="flex-1 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
               <Trophy className="w-4 h-4 mr-2" />
               Statistiche
             </TabsTrigger>
-            <TabsTrigger 
-              value="settings"
-              className="flex-1 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
-            >
+            <TabsTrigger value="settings" className="flex-1 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
               <Settings className="w-4 h-4 mr-2" />
               Profilo
             </TabsTrigger>
           </TabsList>
 
-          {/* Tab Preferiti */}
           <TabsContent value="favorites" className="space-y-5">
             <div className="bg-white rounded-2xl p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-bold text-gray-900">
-                  Prossimi eventi
-                </h3>
-                <span className="text-sm text-gray-500">
-                  {upcomingFavoriteEvents.length}
-                </span>
+                <h3 className="text-lg font-bold text-gray-900">Prossimi eventi</h3>
+                <span className="text-sm text-gray-500">{upcomingFavoriteEvents.length}</span>
               </div>
 
               {upcomingFavoriteEvents.length === 0 ? (
-                <p className="text-gray-500 text-sm">
-                  Nessun evento futuro salvato.
-                </p>
+                <p className="text-gray-500 text-sm">Nessun evento futuro salvato.</p>
               ) : (
                 <div className="space-y-4">
                   {upcomingFavoriteEvents.map((event) => (
@@ -200,115 +233,68 @@ export function ProfileView({
                 </div>
               )}
             </div>
-            
+
             <div className="bg-white rounded-2xl p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-bold text-gray-900">
-                  Locali preferiti
-                </h3>
-                <span className="text-sm text-gray-500">
-                  {favoriteVenues.length}
-                </span>
+                <h3 className="text-lg font-bold text-gray-900">Locali preferiti</h3>
+                <span className="text-sm text-gray-500">{favoriteVenues.length}</span>
               </div>
-            
+
               {favoriteVenues.length === 0 ? (
-                <p className="text-gray-500 text-sm">
-                  Nessun locale preferito.
-                </p>
+                <p className="text-gray-500 text-sm">Nessun locale preferito.</p>
               ) : (
                 <div className="space-y-3">
                   {favoriteVenues.map((venue) => (
-                    <div
-                      key={venue.id}
-                      className="rounded-xl border border-gray-100 p-3"
-                    >
+                    <div key={venue.id} className="rounded-xl border border-gray-100 p-3">
                       <div className="flex justify-between gap-3">
                         <div>
-                          <h4 className="font-bold text-gray-900">
-                            {venue.name}
-                          </h4>
-                          <p className="text-sm text-indigo-600">
-                            {venue.venue_type_name}
-                          </p>
+                          <h4 className="font-bold text-gray-900">{venue.name}</h4>
+                          <p className="text-sm text-indigo-600">{venue.venue_type_name}</p>
                           <p className="text-sm text-gray-600 mt-1">
-                            {venue.address}
-                            {venue.city ? `, ${venue.city}` : ''}
+                            {venue.address}{venue.city ? `, ${venue.city}` : ''}
                           </p>
                         </div>
-                  
-                        <button
-                          onClick={() => onToggleVenueFavorite(venue.id)}
-                          className="text-red-500 text-xl"
-                        >
-                          ❤️
-                        </button>
+                        <button onClick={() => onToggleVenueFavorite(venue.id)} className="text-red-500 text-xl">❤️</button>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-            
+
             <div className="bg-white rounded-2xl p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-bold text-gray-900">
-                  Organizzazioni preferite
-                </h3>
-                <span className="text-sm text-gray-500">
-                  {favoriteOrganizers.length}
-                </span>
+                <h3 className="text-lg font-bold text-gray-900">Organizzazioni preferite</h3>
+                <span className="text-sm text-gray-500">{favoriteOrganizers.length}</span>
               </div>
-            
+
               {favoriteOrganizers.length === 0 ? (
-                <p className="text-gray-500 text-sm">
-                  Nessuna organizzazione preferita.
-                </p>
+                <p className="text-gray-500 text-sm">Nessuna organizzazione preferita.</p>
               ) : (
                 <div className="space-y-3">
                   {favoriteOrganizers.map((organizer) => (
-                    <div
-                      key={organizer.id}
-                      className="rounded-xl border border-gray-100 p-3"
-                    >
+                    <div key={organizer.id} className="rounded-xl border border-gray-100 p-3">
                       <div className="flex justify-between gap-3">
                         <div>
-                          <h4 className="font-bold text-gray-900">
-                            {organizer.name}
-                          </h4>
-                          {organizer.description && (
-                            <p className="text-sm text-gray-600 mt-1">
-                              {organizer.description}
-                            </p>
-                          )}
+                          <h4 className="font-bold text-gray-900">{organizer.name}</h4>
+                          {organizer.description && <p className="text-sm text-gray-600 mt-1">{organizer.description}</p>}
                         </div>
-                        
-                        <button
-                          onClick={() => onToggleOrganizerFavorite(organizer.id)}
-                          className="text-red-500 text-xl"
-                        >
-                          ❤️
-                        </button>
+                        <button onClick={() => onToggleOrganizerFavorite(organizer.id)} className="text-red-500 text-xl">❤️</button>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-            
+
             <div className="bg-white rounded-2xl p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-bold text-gray-900">
-                  Eventi passati
-                </h3>
-                <span className="text-sm text-gray-500">
-                  {pastFavoriteEvents.length}
-                </span>
+                <h3 className="text-lg font-bold text-gray-900">Eventi passati</h3>
+                <span className="text-sm text-gray-500">{pastFavoriteEvents.length}</span>
               </div>
-            
+
               {pastFavoriteEvents.length === 0 ? (
-                <p className="text-gray-500 text-sm">
-                  Nessun evento passato.
-                </p>
+                <p className="text-gray-500 text-sm">Nessun evento passato.</p>
               ) : (
                 <div className="space-y-4">
                   {pastFavoriteEvents.map((event) => (
@@ -325,13 +311,10 @@ export function ProfileView({
             </div>
           </TabsContent>
 
-          {/* Tab Statistiche */}
           <TabsContent value="stats" className="space-y-4">
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Le tue statistiche</h3>
-              
               <div className="space-y-4">
-                {/* Tipo preferito */}
                 <div className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center">
@@ -343,14 +326,11 @@ export function ProfileView({
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-indigo-600">
-                      {eventsByType[favoriteType] || 0}
-                    </p>
+                    <p className="text-2xl font-bold text-indigo-600">{eventsByType[favoriteType] || 0}</p>
                     <p className="text-xs text-gray-500">eventi</p>
                   </div>
                 </div>
 
-                {/* Eventi per tipo */}
                 <div className="space-y-3">
                   <h4 className="font-semibold text-gray-900">Eventi per categoria</h4>
                   {Object.entries(eventsByType).length > 0 ? (
@@ -359,7 +339,7 @@ export function ProfileView({
                         <span className="text-gray-700">{type}</span>
                         <div className="flex items-center gap-3">
                           <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div 
+                            <div
                               className="h-full bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full"
                               style={{ width: `${(count / favoriteEvents.length) * 100}%` }}
                             ></div>
@@ -372,82 +352,64 @@ export function ProfileView({
                     <p className="text-gray-500 text-sm">Nessun dato disponibile</p>
                   )}
                 </div>
-
-                {/* Achievement badges */}
-                <div className="pt-4 border-t border-gray-100">
-                  <h4 className="font-semibold text-gray-900 mb-3">I tuoi achievement</h4>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className={`text-center p-3 rounded-xl ${favoriteEvents.length >= 1 ? 'bg-yellow-50' : 'bg-gray-50 opacity-50'}`}>
-                      <div className="text-3xl mb-1">🎉</div>
-                      <p className="text-xs font-medium">Primo Evento</p>
-                    </div>
-                    <div className={`text-center p-3 rounded-xl ${favoriteEvents.length >= 5 ? 'bg-yellow-50' : 'bg-gray-50 opacity-50'}`}>
-                      <div className="text-3xl mb-1">🔥</div>
-                      <p className="text-xs font-medium">Party Animal</p>
-                    </div>
-                    <div className={`text-center p-3 rounded-xl ${favoriteEvents.length >= 10 ? 'bg-yellow-50' : 'bg-gray-50 opacity-50'}`}>
-                      <div className="text-3xl mb-1">👑</div>
-                      <p className="text-xs font-medium">Night King</p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </TabsContent>
 
-          {/* Tab Impostazioni */}
           <TabsContent value="settings" className="space-y-4">
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-bold text-gray-900">Informazioni personali</h3>
-                {!isEditing && (
-                  <Button
-                    onClick={() => setIsEditing(true)}
-                    variant="outline"
-                    size="sm"
-                    className="rounded-xl"
-                  >
+                {!isEditingProfile && (
+                  <Button onClick={() => setIsEditingProfile(true)} variant="outline" size="sm" className="rounded-xl">
                     <Edit2 className="w-4 h-4 mr-2" />
                     Modifica
                   </Button>
                 )}
               </div>
 
-              {isEditing ? (
-                <div className="space-y-4">
+              {isEditingProfile ? (
+                <form onSubmit={handleProfileSubmit} className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={profileForm.avatar || 'https://ui-avatars.com/api/?name=User&background=6366f1&color=fff'}
+                      alt="Avatar"
+                      className="w-20 h-20 rounded-full object-cover bg-gray-100"
+                    />
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleAvatarUpload(file);
+                      }}
+                    />
+                  </div>
+
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Nome</label>
-                    <Input
-                      value={editData.name}
-                      onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                      className="rounded-xl"
-                    />
+                    <Input value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} className="rounded-xl" required />
                   </div>
+
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">Email</label>
-                    <Input
-                      type="email"
-                      value={editData.email}
-                      onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-                      className="rounded-xl"
-                    />
+                    <Input type="email" value={profileForm.email} onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })} className="rounded-xl" required />
                   </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Città</label>
+                    <Input value={profileForm.city} onChange={(e) => setProfileForm({ ...profileForm, city: e.target.value })} placeholder="Es. Torino" className="rounded-xl" />
+                  </div>
+
                   <div className="flex gap-3 pt-2">
-                    <Button
-                      onClick={handleSaveProfile}
-                      className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                    >
+                    <Button type="submit" className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600">
                       Salva modifiche
                     </Button>
-                    <Button
-                      onClick={handleCancelEdit}
-                      variant="outline"
-                      className="flex-1 rounded-xl"
-                    >
+                    <Button type="button" onClick={handleCancelProfileEdit} variant="outline" className="flex-1 rounded-xl">
                       Annulla
                     </Button>
                   </div>
-                </div>
+                </form>
               ) : (
                 <div className="space-y-4">
                   <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
@@ -464,47 +426,57 @@ export function ProfileView({
                       <p className="font-medium text-gray-900">{userData.email}</p>
                     </div>
                   </div>
+                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                    <MapPin className="w-5 h-5 text-gray-400" />
+                    <div>
+                      <p className="text-sm text-gray-600">Città</p>
+                      <p className="font-medium text-gray-900">{userData.city || 'Non impostata'}</p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Preferenze */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Cambia password</h3>
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <Input
+                  type="password"
+                  placeholder="Password attuale"
+                  value={passwordForm.old_password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, old_password: e.target.value })}
+                  required
+                />
+                <Input
+                  type="password"
+                  placeholder="Nuova password"
+                  value={passwordForm.new_password}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+                  required
+                />
+                <Button type="submit" className="w-full h-11 rounded-xl bg-indigo-600 text-white">
+                  Aggiorna password
+                </Button>
+              </form>
+            </div>
+
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Preferenze</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <MapPin className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="font-medium text-gray-900">Posizione</p>
-                      <p className="text-sm text-gray-600">Non impostata</p>
-                    </div>
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <Calendar className="w-5 h-5 text-gray-400" />
+                  <div>
+                    <p className="font-medium text-gray-900">Notifiche</p>
+                    <p className="text-sm text-gray-600">In arrivo</p>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-indigo-600">
-                    Modifica
-                  </Button>
                 </div>
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-gray-400" />
-                    <div>
-                      <p className="font-medium text-gray-900">Notifiche</p>
-                      <p className="text-sm text-gray-600">Attive per nuovi eventi</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="text-indigo-600">
-                    Gestisci
-                  </Button>
-                </div>
+                <Button variant="ghost" size="sm" className="text-indigo-600">
+                  Gestisci
+                </Button>
               </div>
             </div>
 
-            {/* Logout button */}
-            <Button
-              onClick={onLogout}
-              variant="outline"
-              className="w-full h-12 rounded-xl border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
-            >
+            <Button onClick={onLogout} variant="outline" className="w-full h-12 rounded-xl border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300">
               <LogOut className="w-5 h-5 mr-2" />
               Disconnetti
             </Button>

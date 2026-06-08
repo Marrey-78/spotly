@@ -11,6 +11,7 @@ import { VenuesView } from './app/components/VenuesView';
 import { getPublicEvents, getNearbyEvents, getEventsByCity } from './app/api/publicEvents';
 import { getFavoriteEvents, addFavoriteEvent, removeFavoriteEvent, getFavoriteVenues, addFavoriteVenue, removeFavoriteVenue,
   getFavoriteOrganizers, addFavoriteOrganizer, removeFavoriteOrganizer} from './app/api/favorites';
+import { getMyProfile, updateMyProfile } from './app/api/users';
 
 // Login
 interface UserData {
@@ -151,6 +152,15 @@ export default function App() {
       console.error('Errore caricamento preferiti:', error);
     }
   };
+
+  const loadMyProfile = async () => {
+    try {
+      const profile = await getMyProfile();
+      setUserData(profile);
+    } catch (error) {
+      console.error('Errore caricamento profilo:', error);
+    }
+  };
   
 
 
@@ -180,6 +190,7 @@ export default function App() {
       loadFavoriteEvents();
       loadVenueFavorites();
       loadOrganizerFavorites();
+      loadMyProfile();
     }
   }, [isLoggedIn, selectedCity]);
 
@@ -431,7 +442,6 @@ export default function App() {
             onEventClick={handleEventClick}
             userData={userData}
             onLogout={handleLogout}
-            onUpdateProfile={handleUpdateProfile}
             favoritesCount={favorites.size}
             favoriteVenues={favoriteVenues}
             favoriteOrganizers={favoriteOrganizers}
@@ -439,10 +449,19 @@ export default function App() {
             organizerFavorites={organizerFavorites}
             onToggleVenueFavorite={toggleVenueFavorite}
             onToggleOrganizerFavorite={toggleOrganizerFavorite}
+            onUpdateProfile={async (data) => {
+            const updated = await updateMyProfile(data);
+            setUserData(updated);
+            }}
           />
         )}
         {activeSection === 'venues' && userData?.role === 'venue_owner' && (
-          <VenuesView />
+          <VenuesView
+            venueFavorites={venueFavorites}
+            organizerFavorites={organizerFavorites}
+            onToggleVenueFavorite={toggleVenueFavorite}
+            onToggleOrganizerFavorite={toggleOrganizerFavorite}
+          />
         )}
       </div>
 

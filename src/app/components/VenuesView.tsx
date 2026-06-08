@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Store, Plus, MapPin, Phone, Instagram } from 'lucide-react';
+import { Store, Plus, MapPin, Phone, Instagram , Heart} from 'lucide-react';
 import { getVenueTypes, getMyVenues, createVenue, deleteVenue, updateVenue } from '../api/venues';
 import { Trash2, Pencil} from 'lucide-react';
 import { Button } from './ui/button';
@@ -40,7 +40,19 @@ interface Organizer {
   image_url?: string;
 }
 
-export function VenuesView() {
+interface VenuesViewProps {
+  venueFavorites?: Set<string>;
+  organizerFavorites?: Set<string>;
+  onToggleVenueFavorite?: (venueId: string) => void;
+  onToggleOrganizerFavorite?: (organizerId: string) => void;
+}
+
+export function VenuesView({
+  venueFavorites = new Set(),
+  organizerFavorites = new Set(),
+  onToggleVenueFavorite,
+  onToggleOrganizerFavorite,
+}: VenuesViewProps = {}) {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [venueTypes, setVenueTypes] = useState<VenueType[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -563,7 +575,26 @@ export function VenuesView() {
                         </p>
                       </div>
 
+                    
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onToggleVenueFavorite?.(venue.id)}
+                        className="w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center"
+                      >
+                        <Heart
+                          className={`w-5 h-5 ${
+                            venueFavorites.has(venue.id)
+                              ? 'fill-red-500 text-red-500'
+                              : 'text-gray-400'
+                          }`}
+                        />
+                      </button>
+                        
                       <Store className="w-6 h-6 text-gray-400" />
+                    </div>
+                    
                     </div>
 
                     {venue.description && (
@@ -853,9 +884,25 @@ export function VenuesView() {
                   ) : (
                   
                     <div className="p-4">
-                      <h2 className="text-lg font-bold text-gray-900">
-                        {organizer.name}
-                      </h2>
+                      <div className="flex items-start justify-between gap-3">
+                        <h2 className="text-lg font-bold text-gray-900">
+                          {organizer.name}
+                        </h2>
+
+                        <button
+                          type="button"
+                          onClick={() => onToggleOrganizerFavorite?.(organizer.id)}
+                          className="w-10 h-10 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center"
+                        >
+                          <Heart
+                            className={`w-5 h-5 ${
+                              organizerFavorites.has(organizer.id)
+                                ? 'fill-red-500 text-red-500'
+                                : 'text-gray-400'
+                            }`}
+                          />
+                        </button>
+                      </div>
                   
                       {organizer.description && (
                         <p className="text-gray-600 text-sm mt-2">

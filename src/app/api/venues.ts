@@ -66,3 +66,31 @@ export async function deleteVenue(venueId: string) {
 
   return response.json();
 }
+
+export async function updateVenue(
+  venueId: string,
+  data: {
+    venue_type_id: string;
+    name: string;
+    description?: string;
+    address: string;
+    city: string;
+    phone?: string;
+    email?: string;
+    website_url?: string;
+    instagram_url?: string;
+    image_url?: string;
+  }
+) {
+  const response = await fetch(`${API_URL}/venues/${venueId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error('Errore modifica locale');
+  }
+
+  return response.json();
+}

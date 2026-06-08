@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Store, Plus, MapPin, Phone, Instagram } from 'lucide-react';
-import { getVenueTypes, getMyVenues, createVenue, deleteVenue } from '../api/venues';
-import { Trash2 } from 'lucide-react';
+import { getVenueTypes, getMyVenues, createVenue, deleteVenue, updateVenue } from '../api/venues';
+import { Trash2, Pencil} from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { EventsManagerView } from './EventsManagerView';
-import {getMyOrganizers, createOrganizer, deleteOrganizer} from '../api/organizers';
+import { getMyOrganizers, createOrganizer, deleteOrganizer, updateOrganizer} from '../api/organizers';
 import { OrganizerEventsManagerView } from './OrganizerEventsManager';
 
 interface VenueType {
@@ -16,12 +16,16 @@ interface VenueType {
 
 interface Venue {
   id: string;
+  venue_type_id: string;
   name: string;
   description?: string;
   address: string;
   city?: string;
   phone?: string;
+  email?: string;
+  website_url?: string;
   instagram_url?: string;
+  image_url?: string;
   venue_type_name?: string;
 }
 
@@ -46,6 +50,9 @@ export function VenuesView() {
   const [activeTab, setActiveTab] = useState<'venues' | 'organizers'>('venues');
   const [showOrganizerForm, setShowOrganizerForm] = useState(false);
   const [selectedOrganizer, setSelectedOrganizer] = useState<Organizer | null>(null);
+  const [editingVenue, setEditingVenue] = useState<Venue | null>(null);
+  const [editingOrganizer, setEditingOrganizer] = useState<Organizer | null>(null);
+  
 
   const [organizerFormData, setOrganizerFormData] = useState({
     name: '',
@@ -64,6 +71,8 @@ export function VenuesView() {
     address: '',
     city: '',
     phone: '',
+    email: '',
+    website_url: '',
     instagram_url: '',
     image_url: '',
   });
@@ -102,18 +111,39 @@ export function VenuesView() {
     e.preventDefault();
 
     try {
-      await createVenue(formData);
+      const payload = {
+        venue_type_id: formData.venue_type_id,
+        name: formData.name,
+        description: formData.description || undefined,
+        address: formData.address,
+        city: formData.city,
+        phone: formData.phone || undefined,
+        email: formData.email || undefined,
+        website_url: formData.website_url || undefined,
+        instagram_url: formData.instagram_url || undefined,
+        image_url: formData.image_url || undefined,
+      };
 
-      setFormData({
-        venue_type_id: venueTypes[0]?.id || '',
-        name: '',
-        description: '',
-        address: '',
-        city: '',
-        phone: '',
-        instagram_url: '',
-        image_url: '',
-      });
+      if (editingVenue) {
+        await updateVenue(editingVenue.id, payload);
+      } else {
+        await createVenue(payload);
+      }
+
+      setEditingVenue(null);
+
+    setFormData({
+      venue_type_id: venueTypes[0]?.id || '',
+      name: '',
+      description: '',
+      address: '',
+      city: '',
+      phone: '',
+      email: '',
+      website_url: '',
+      instagram_url: '',
+      image_url: '',
+    });
 
       setShowForm(false);
       await loadData();
@@ -122,6 +152,7 @@ export function VenuesView() {
       alert('Errore durante la creazione del locale');
     }
   };
+
   const handleDeleteVenue = async (venueId: string) => {
     const confirmed = window.confirm(
       'Sei sicuro di voler eliminare questo locale? Verranno eliminati anche tutti gli eventi collegati.'
@@ -142,7 +173,7 @@ export function VenuesView() {
     e.preventDefault();
       
     try {
-      await createOrganizer({
+      const payload = {
         name: organizerFormData.name,
         description: organizerFormData.description || undefined,
         phone: organizerFormData.phone || undefined,
@@ -150,7 +181,15 @@ export function VenuesView() {
         website_url: organizerFormData.website_url || undefined,
         instagram_url: organizerFormData.instagram_url || undefined,
         image_url: organizerFormData.image_url || undefined,
-      });
+      };
+      
+      if (editingOrganizer) {
+        await updateOrganizer(editingOrganizer.id, payload);
+      } else {
+        await createOrganizer(payload);
+      }
+      
+      setEditingOrganizer(null);
     
       setOrganizerFormData({
         name: '',
@@ -184,6 +223,39 @@ export function VenuesView() {
       console.error(error);
       alert('Errore durante eliminazione organizzatore');
     }
+  };
+
+  const startEditOrganizer = (organizer: Organizer) => {
+    setEditingOrganizer(organizer);
+    setShowOrganizerForm(true);
+
+    setOrganizerFormData({
+      name: organizer.name || '',
+      description: organizer.description || '',
+      phone: organizer.phone || '',
+      email: organizer.email || '',
+      website_url: organizer.website_url || '',
+      instagram_url: organizer.instagram_url || '',
+      image_url: organizer.image_url || '',
+    });
+  };
+
+  const startEditVenue = (venue: Venue) => {
+    setEditingVenue(venue);
+    setShowForm(true);
+  
+    setFormData({
+      venue_type_id: venue.venue_type_id || venueTypes[0]?.id || '',
+      name: venue.name || '',
+      description: venue.description || '',
+      address: venue.address || '',
+      city: venue.city || '',
+      phone: venue.phone || '',
+      email: venue.email || '',
+      website_url: venue.website_url || '',
+      instagram_url: venue.instagram_url || '',
+      image_url: venue.image_url || '',
+    });
   };
 
   if (isLoading) {
@@ -433,6 +505,15 @@ export function VenuesView() {
                   >
                     Gestisci eventi
                   </Button>
+
+                  <Button
+                    onClick={() => startEditVenue(venue)}
+                    className="w-full mt-2 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                    variant="ghost"
+                  >
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Modifica locale
+                  </Button>
                   
                   <Button
                       onClick={() => handleDeleteVenue(venue.id)}
@@ -467,7 +548,7 @@ export function VenuesView() {
               className="bg-white rounded-2xl shadow-md p-4 space-y-4 mb-6"
             >
               <h2 className="text-lg font-bold text-gray-900">
-                Nuovo organizzatore
+                {editingOrganizer ? 'Modifica organizzatore' : 'Nuovo organizzatore'}
               </h2>
           
               <Input
@@ -552,7 +633,10 @@ export function VenuesView() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setShowOrganizerForm(false)}
+                  onClick={() => {
+                    setEditingOrganizer(null);
+                    setShowOrganizerForm(false);
+                  }}
                   className="flex-1 h-12 rounded-xl"
                 >
                   Annulla
@@ -562,7 +646,7 @@ export function VenuesView() {
                   type="submit"
                   className="flex-1 h-12 rounded-xl bg-indigo-600 text-white"
                 >
-                  Salva
+                  {editingOrganizer ? 'Salva modifiche' : 'Salva'}
                 </Button>
               </div>
             </form>
@@ -607,6 +691,15 @@ export function VenuesView() {
                       variant="ghost"
                     >
                       Gestisci eventi
+                    </Button>
+
+                    <Button
+                      onClick={() => startEditOrganizer(organizer)}
+                      className="w-full mt-2 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                      variant="ghost"
+                    >
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Modifica organizzatore
                     </Button>
                   
                     <Button

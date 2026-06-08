@@ -56,3 +56,28 @@ export async function deleteOrganizer(organizerId: string) {
 
   return response.json();
 }
+
+export async function updateOrganizer(
+  organizerId: string,
+  data: {
+    name: string;
+    description?: string;
+    phone?: string;
+    email?: string;
+    website_url?: string;
+    instagram_url?: string;
+    image_url?: string;
+  }
+  ) {
+    const response = await fetch(`${API_URL}/organizers/${organizerId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+  
+    if (!response.ok) {
+      throw new Error('Errore modifica organizzatore');
+    }
+  
+    return response.json();
+}

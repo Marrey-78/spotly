@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Mail, Lock, User, ArrowRight, Sparkles, Calendar, MapPin, Heart } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { loginUser, registerUser } from '../api/auth';
+import { loginUser, registerUser , loginWithFirebase} from '../api/auth';
+import { auth, googleProvider, signInWithPopup } from '../../firebase';
 
 interface LoginViewProps {
   onLogin: (userData: {
@@ -23,6 +24,30 @@ export function LoginView({ onLogin }: LoginViewProps) {
     hasVenue: false,
 
   });
+
+
+const handleGoogleLogin = async () => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+
+    const idToken = await result.user.getIdToken();
+
+    const backendResult = await loginWithFirebase(idToken);
+
+    localStorage.setItem('token', backendResult.token);
+    localStorage.setItem(
+      'userData',
+      JSON.stringify(backendResult.user)
+    );
+
+    onLogin(backendResult.user);
+
+  } catch (error) {
+    console.error('Errore login Google:', error);
+    alert('Accesso con Google non riuscito');
+  }
+};
+
 
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -221,6 +246,38 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </div>
               </div>
 
+            </div>
+            <div className="mt-6">
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                className="w-full h-12 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 font-medium text-gray-700 shadow-sm"
+              >
+                <svg
+                  className="w-5 h-5"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    fill="#4285F4"
+                    d="M21.35 12.27c0-.78-.07-1.53-.2-2.27H12v4.3h5.2a4.44 4.44 0 0 1-1.93 2.91v2.42h3.13c1.83-1.69 2.95-4.18 2.95-7.36z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 21.9c2.62 0 4.82-.87 6.43-2.37l-3.13-2.42c-.87.58-1.98.92-3.3.92-2.53 0-4.68-1.71-5.45-4.01H3.32v2.5A9.71 9.71 0 0 0 12 21.9z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M6.55 14.02A5.84 5.84 0 0 1 6.25 12c0-.7.12-1.38.3-2.02V7.48H3.32A9.72 9.72 0 0 0 2.25 12c0 1.57.38 3.05 1.07 4.52l3.23-2.5z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.97c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.82 3.08 14.62 2.1 12 2.1a9.71 9.71 0 0 0-8.68 5.38l3.23 2.5c.77-2.3 2.92-4.01 5.45-4.01z"
+                  />
+                </svg>
+                        
+                Continua con Google
+              </button>
             </div>
 
             <div className="mt-6 text-center">

@@ -1,347 +1,1449 @@
 import { useState } from 'react';
-import { Mail, Lock, User, ArrowRight, Sparkles, Calendar, MapPin, Heart } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { loginUser, registerUser , loginWithFirebase} from '../api/auth';
-import { auth, googleProvider, facebookProvider,signInWithPopup } from '../../firebase';
+import flodeLogo from '../../assets/flode-bianco-trasparente.png';
+import {Eye,EyeOff,Lock, Mail, User, ArrowRight, MapPin, CalendarDays, Users,} from 'lucide-react';
+
+import {
+  loginUser,
+  registerUser,
+  loginWithFirebase,
+} from '../api/auth';
+
+import {
+  auth,
+  googleProvider,
+  facebookProvider,
+  signInWithPopup,
+} from '../../firebase';
+
 
 interface LoginViewProps {
-  onLogin: (userData: {
-    id: string;
-    name: string;
-    email: string;
-    avatar: string;
-    role: 'user' | 'venue_owner';
-  }) => void;
+  onLogin: (user: any) => void;
 }
 
+
 export function LoginView({ onLogin }: LoginViewProps) {
-  const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    hasVenue: false,
 
-  });
+  const [isRegistering, setIsRegistering] = useState(false);
 
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-const handleGoogleLogin = async () => {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
+  const [hasVenue, setHasVenue] = useState(false);
 
-    const idToken = await result.user.getIdToken();
+  const [showPassword, setShowPassword] = useState(false);
 
-    const backendResult = await loginWithFirebase(idToken);
+  const [loading, setLoading] = useState(false);
 
-    localStorage.setItem('token', backendResult.token);
-    localStorage.setItem(
-      'userData',
-      JSON.stringify(backendResult.user)
-    );
-
-    onLogin(backendResult.user);
-
-  } catch (error) {
-    console.error('Errore login Google:', error);
-    alert('Accesso con Google non riuscito');
-  }
-};
-
-const handleFacebookLogin = async () => {
-  try {
-    const result = await signInWithPopup(auth, facebookProvider);
-
-    const idToken = await result.user.getIdToken();
-
-    const backendResult = await loginWithFirebase(idToken);
-
-    localStorage.setItem('token', backendResult.token);
-    localStorage.setItem(
-      'userData',
-      JSON.stringify(backendResult.user)
-    );
-
-    onLogin(backendResult.user);
-
-  } catch (error) {
-    console.error('Errore login Facebook:', error);
-    alert('Accesso con Facebook non riuscito');
-  }
-};
+  const [error, setError] = useState('');
 
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+  /*
+  ============================================================
+  LOGIN EMAIL / PASSWORD
+  ============================================================
+  */
 
-  try {
-    if (isLogin) {
+  const handleLogin = async (e: React.FormEvent) => {
+
+    e.preventDefault();
+
+    setError('');
+    setLoading(true);
+
+    try {
+
       const result = await loginUser({
-        email: formData.email,
-        password: formData.password,
+        email,
+        password,
       });
 
-      localStorage.setItem('token', result.token);
-      localStorage.setItem('userData', JSON.stringify(result.user));
+      localStorage.setItem(
+        'token',
+        result.token
+      );
+
+      localStorage.setItem(
+        'userData',
+        JSON.stringify(result.user)
+      );
 
       onLogin(result.user);
-    } else {
-      const result = await registerUser({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        hasVenue: formData.hasVenue,
-      });
 
-      localStorage.setItem('token', result.token);
-      localStorage.setItem('userData', JSON.stringify(result.user));
+    } catch (error) {
 
-      onLogin(result.user);
+      console.error(
+        'Errore login:',
+        error
+      );
+
+      setError(
+        'Email o password non corretti.'
+      );
+
+    } finally {
+
+      setLoading(false);
+
     }
-  } catch (error) {
-    console.error(error);
-    alert('Email o password non validi');
-  }
-};
+  };
+
+
+  /*
+  ============================================================
+  REGISTRAZIONE
+  ============================================================
+  */
+
+  const handleRegister = async (
+    e: React.FormEvent
+  ) => {
+
+    e.preventDefault();
+
+    setError('');
+    setLoading(true);
+
+    try {
+
+      const result = await registerUser({
+        name,
+        email,
+        password,
+        hasVenue,
+      });
+
+      localStorage.setItem(
+        'token',
+        result.token
+      );
+
+      localStorage.setItem(
+        'userData',
+        JSON.stringify(result.user)
+      );
+
+      onLogin(result.user);
+
+    } catch (error) {
+
+      console.error(
+        'Errore registrazione:',
+        error
+      );
+
+      setError(
+        'Non è stato possibile creare il tuo account.'
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  };
+
+
+  /*
+  ============================================================
+  GOOGLE
+  ============================================================
+  */
+
+  const handleGoogleLogin = async () => {
+
+    setError('');
+    setLoading(true);
+
+    try {
+
+      const result =
+        await signInWithPopup(
+          auth,
+          googleProvider
+        );
+
+      const idToken =
+        await result.user.getIdToken();
+
+      const backendResult =
+        await loginWithFirebase(
+          idToken
+        );
+
+      localStorage.setItem(
+        'token',
+        backendResult.token
+      );
+
+      localStorage.setItem(
+        'userData',
+        JSON.stringify(
+          backendResult.user
+        )
+      );
+
+      onLogin(
+        backendResult.user
+      );
+
+    } catch (error) {
+
+      console.error(
+        'Errore login Google:',
+        error
+      );
+
+      setError(
+        'Accesso con Google non riuscito.'
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  };
+
+
+  /*
+  ============================================================
+  FACEBOOK
+  ============================================================
+  */
+
+  const handleFacebookLogin = async () => {
+
+    setError('');
+    setLoading(true);
+
+    try {
+
+      const result =
+        await signInWithPopup(
+          auth,
+          facebookProvider
+        );
+
+      const idToken =
+        await result.user.getIdToken();
+
+      const backendResult =
+        await loginWithFirebase(
+          idToken
+        );
+
+      localStorage.setItem(
+        'token',
+        backendResult.token
+      );
+
+      localStorage.setItem(
+        'userData',
+        JSON.stringify(
+          backendResult.user
+        )
+      );
+
+      onLogin(
+        backendResult.user
+      );
+
+    } catch (error) {
+
+      console.error(
+        'Errore login Facebook:',
+        error
+      );
+
+      setError(
+        'Accesso con Facebook non riuscito.'
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
+  };
+
+
+  /*
+  ============================================================
+  UI
+  ============================================================
+  */
 
   return (
-    <div className="h-screen flex flex-col md:flex-row overflow-hidden">
-      {/* Left side - Hero section */}
-      <div className="hidden md:flex md:w-1/2 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-12 flex-col justify-between text-white relative overflow-hidden">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-white rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse delay-1000"></div>
-        </div>
 
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-              <Sparkles className="w-7 h-7" />
-            </div>
-            <h1 className="text-3xl font-bold">NightLife</h1>
-          </div>
-          
-          <div className="space-y-6">
-            <h2 className="text-4xl font-bold leading-tight">
-              Scopri gli eventi<br />più cool della città
-            </h2>
-            <p className="text-xl text-white/90 max-w-md">
-              Trova concerti, feste, spettacoli e molto altro. La tua notte perfetta ti aspetta.
-            </p>
-          </div>
-        </div>
+    <div
+      className="
+        min-h-screen
+        bg-[#050914]
+        text-white
+        relative
+        overflow-x-hidden
+      "
+    >
 
-        <div className="relative z-10 grid grid-cols-3 gap-4">
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
-            <Calendar className="w-6 h-6 mx-auto mb-2" />
-            <p className="text-sm font-semibold">100+ Eventi</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
-            <MapPin className="w-6 h-6 mx-auto mb-2" />
-            <p className="text-sm font-semibold">50+ Località</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 text-center">
-            <Heart className="w-6 h-6 mx-auto mb-2" />
-            <p className="text-sm font-semibold">Preferiti</p>
-          </div>
-        </div>
-      </div>
+      {/* =====================================================
+          BACKGROUND GLOW
+      ====================================================== */}
 
-      {/* Right side - Form section */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-gray-50">
-        <div className="w-full max-w-md">
-          {/* Mobile logo */}
-          <div className="md:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center">
-              <Sparkles className="w-7 h-7 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              NightLife
-            </h1>
-          </div>
+      <div
+        className="
+          fixed
+          -left-48
+          top-1/3
+          w-[500px]
+          h-[500px]
+          bg-cyan-500/10
+          rounded-full
+          blur-[150px]
+          pointer-events-none
+        "
+      />
 
-          <div className="bg-white rounded-3xl shadow-xl p-8">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                {isLogin ? 'Bentornato!' : 'Inizia ora'}
-              </h2>
-              <p className="text-gray-600">
-                {isLogin 
-                  ? 'Accedi per scoprire gli eventi della tua città' 
-                  : 'Crea un account per salvare i tuoi eventi preferiti'}
+      <div
+        className="
+          fixed
+          -right-48
+          top-1/4
+          w-[500px]
+          h-[500px]
+          bg-purple-600/15
+          rounded-full
+          blur-[150px]
+          pointer-events-none
+        "
+      />
+
+
+      <div
+        className="
+          min-h-screen
+          lg:grid
+          lg:grid-cols-[1.05fr_0.95fr]
+        "
+      >
+
+        {/* =====================================================
+            LEFT SIDE
+        ====================================================== */}
+
+        <section
+          className="
+            relative
+            hidden
+            lg:flex
+            min-h-screen
+            overflow-hidden
+          "
+        >
+
+          {/* Background image */}
+
+          <div
+            className="
+              absolute
+              inset-0
+              bg-[url('https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1600&q=85')]
+              bg-cover
+              bg-center
+            "
+          />
+
+          {/* Image overlays */}
+
+          <div
+            className="
+              absolute
+              inset-0
+              bg-gradient-to-t
+              from-[#050914]
+              via-[#050914]/40
+              to-[#050914]/20
+            "
+          />
+
+          <div
+            className="
+              absolute
+              inset-0
+              bg-gradient-to-r
+              from-transparent
+              via-transparent
+              to-[#050914]
+            "
+          />
+
+          <div
+            className="
+              absolute
+              inset-0
+              bg-purple-900/10
+            "
+          />
+
+
+          {/* LEFT CONTENT */}
+
+          <div
+            className="
+              relative
+              z-10
+              flex
+              flex-col
+              justify-between
+              w-full
+              px-12
+              xl:px-20
+              py-12
+            "
+          >
+
+            {/* LOGO */}
+
+            <FlodeLogo />
+
+
+            {/* HERO */}
+
+            <div
+              className="
+                max-w-xl
+                pb-14
+              "
+            >
+
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-2
+                  mb-6
+                  text-cyan-300
+                  text-sm
+                  tracking-[0.22em]
+                  uppercase
+                "
+              >
+                <span
+                  className="
+                    w-8
+                    h-[1px]
+                    bg-cyan-400
+                  "
+                />
+
+                La città intorno a te
+              </div>
+
+
+              <h1
+                className="
+                  text-5xl
+                  xl:text-6xl
+                  font-bold
+                  leading-[1.05]
+                  tracking-tight
+                "
+              >
+                La tua città,
+                <br />
+
+                <span
+                  className="
+                    bg-gradient-to-r
+                    from-cyan-300
+                    via-blue-400
+                    to-purple-400
+                    bg-clip-text
+                    text-transparent
+                  "
+                >
+                  in un flusso.
+                </span>
+              </h1>
+
+
+              <p
+                className="
+                  mt-6
+                  text-lg
+                  text-white/70
+                  max-w-lg
+                  leading-relaxed
+                "
+              >
+                Scopri eventi, locali e persone.
+                Vivi quello che succede intorno a te.
               </p>
-            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Nome</label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <Input
-                      type="text"
-                      placeholder="Mario Rossi"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="pl-10 h-12 rounded-xl"
-                      required={!isLogin}
-                    />
-                  </div>
-                </div>
-              )}
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Email</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    type="email"
-                    placeholder="tua@email.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="pl-10 h-12 rounded-xl"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="pl-10 h-12 rounded-xl"
-                    required
-                  />
-                </div>
-              </div>
-
-              {!isLogin && (
-                <label className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    checked={formData.hasVenue}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        hasVenue: e.target.checked,
-                      })
-                    }
-                    className="h-4 w-4"
-                  />
-                  Ho uno o più locali e voglio inserire eventi
-                </label>
-              )}
-
-              {isLogin && (
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-                  >
-                    Password dimenticata?
-                  </button>
-                </div>
-              )}
-
-              <Button
-                type="submit"
-                className="w-full h-12 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold text-base"
+              <div
+                className="
+                  flex
+                  gap-8
+                  mt-10
+                  text-sm
+                  text-white/70
+                "
               >
-                {isLogin ? 'Accedi' : 'Registrati'}
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </form>
 
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white text-gray-500">oppure</span>
-                </div>
+                <HeroFeature
+                  icon={
+                    <MapPin size={18} />
+                  }
+                  text="Luoghi"
+                />
+
+                <HeroFeature
+                  icon={
+                    <CalendarDays size={18} />
+                  }
+                  text="Eventi"
+                />
+
+                <HeroFeature
+                  icon={
+                    <Users size={18} />
+                  }
+                  text="Community"
+                />
+
               </div>
 
             </div>
-            <div className="mt-6">
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                className="w-full h-12 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 font-medium text-gray-700 shadow-sm"
+
+          </div>
+
+        </section>
+
+
+        {/* =====================================================
+            RIGHT SIDE
+        ====================================================== */}
+
+        <section
+          className="
+            min-h-screen
+            flex
+            items-center
+            justify-center
+            px-5
+            sm:px-8
+            py-10
+            relative
+          "
+        >
+
+          <div
+            className="
+              w-full
+              max-w-[460px]
+            "
+          >
+
+            {/* MOBILE LOGO */}
+
+            <div
+              className="
+                lg:hidden
+                flex
+                justify-center
+                mb-8
+              "
+            >
+
+              <FlodeLogo
+                centered
+              />
+
+            </div>
+
+
+            {/* =================================================
+                CARD
+            ================================================== */}
+
+            <div
+              className="
+                bg-[#0B1220]/80
+                backdrop-blur-2xl
+                border
+                border-white/[0.08]
+                shadow-2xl
+                shadow-black/30
+                rounded-[28px]
+                p-5
+                sm:p-8
+              "
+            >
+
+              {/* TITLE */}
+
+              <div
+                className="
+                  mb-7
+                "
               >
-                <svg
-                  className="w-5 h-5"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
+
+                <h2
+                  className="
+                    text-2xl
+                    sm:text-3xl
+                    font-semibold
+                    tracking-tight
+                  "
                 >
-                  <path
-                    fill="#4285F4"
-                    d="M21.35 12.27c0-.78-.07-1.53-.2-2.27H12v4.3h5.2a4.44 4.44 0 0 1-1.93 2.91v2.42h3.13c1.83-1.69 2.95-4.18 2.95-7.36z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 21.9c2.62 0 4.82-.87 6.43-2.37l-3.13-2.42c-.87.58-1.98.92-3.3.92-2.53 0-4.68-1.71-5.45-4.01H3.32v2.5A9.71 9.71 0 0 0 12 21.9z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M6.55 14.02A5.84 5.84 0 0 1 6.25 12c0-.7.12-1.38.3-2.02V7.48H3.32A9.72 9.72 0 0 0 2.25 12c0 1.57.38 3.05 1.07 4.52l3.23-2.5z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.97c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.82 3.08 14.62 2.1 12 2.1a9.71 9.71 0 0 0-8.68 5.38l3.23 2.5c.77-2.3 2.92-4.01 5.45-4.01z"
-                  />
-                </svg>
-                        
-                Continua con Google
-              </button>
-            </div>
+                  {isRegistering
+                    ? 'Crea il tuo account'
+                    : 'Bentornato'}
+                </h2>
 
-            <div className="mt-3">
-              <button
-                type="button"
-                onClick={handleFacebookLogin}
-                className="w-full h-12 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 font-medium text-gray-700 shadow-sm"
-              >
-                <svg
-                  className="w-5 h-5"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
+
+                <p
+                  className="
+                    text-white/45
+                    mt-2
+                    text-sm
+                  "
                 >
-                  <path
-                    fill="#1877F2"
-                    d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.972h-1.513c-1.49 0-1.956.931-1.956 1.887v2.262h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"
-                  />
-                </svg>
-                        
-                Continua con Facebook
-              </button>
-            </div>
+                  {isRegistering
+                    ? 'Entra nel flusso della tua città.'
+                    : 'Scopri cosa sta succedendo intorno a te.'}
+                </p>
 
-            <div className="mt-6 text-center">
-              <p className="text-gray-600">
-                {isLogin ? 'Non hai un account?' : 'Hai già un account?'}
+              </div>
+
+
+              {/* =================================================
+                  LOGIN / REGISTER SWITCH
+              ================================================== */}
+
+              <div
+                className="
+                  grid
+                  grid-cols-2
+                  bg-white/[0.04]
+                  border
+                  border-white/[0.05]
+                  rounded-xl
+                  p-1
+                  mb-7
+                "
+              >
+
                 <button
                   type="button"
-                  onClick={() => setIsLogin(!isLogin)}
-                  className="ml-2 text-indigo-600 hover:text-indigo-700 font-semibold"
+                  onClick={() => {
+                    setIsRegistering(false);
+                    setError('');
+                  }}
+                  className={`
+                    h-11
+                    rounded-lg
+                    text-sm
+                    font-medium
+                    transition-all
+                    ${
+                      !isRegistering
+                        ? `
+                          bg-white/[0.10]
+                          text-white
+                          shadow
+                        `
+                        : `
+                          text-white/45
+                          hover:text-white
+                        `
+                    }
+                  `}
                 >
-                  {isLogin ? 'Registrati' : 'Accedi'}
+                  Accedi
                 </button>
+
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRegistering(true);
+                    setError('');
+                  }}
+                  className={`
+                    h-11
+                    rounded-lg
+                    text-sm
+                    font-medium
+                    transition-all
+                    ${
+                      isRegistering
+                        ? `
+                          bg-white/[0.10]
+                          text-white
+                          shadow
+                        `
+                        : `
+                          text-white/45
+                          hover:text-white
+                        `
+                    }
+                  `}
+                >
+                  Registrati
+                </button>
+
+              </div>
+
+
+              {/* =================================================
+                  FORM
+              ================================================== */}
+
+              <form
+                onSubmit={
+                  isRegistering
+                    ? handleRegister
+                    : handleLogin
+                }
+              >
+
+                <div
+                  className="
+                    space-y-4
+                  "
+                >
+
+                  {/* NAME */}
+
+                  {isRegistering && (
+
+                    <InputContainer>
+
+                      <User
+                        size={19}
+                        className="
+                          text-white/40
+                          shrink-0
+                        "
+                      />
+
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) =>
+                          setName(
+                            e.target.value
+                          )
+                        }
+                        placeholder="Nome"
+                        required
+                        autoComplete="name"
+                        className="
+                          w-full
+                          bg-transparent
+                          outline-none
+                          text-white
+                          placeholder:text-white/30
+                        "
+                      />
+
+                    </InputContainer>
+
+                  )}
+
+
+                  {/* EMAIL */}
+
+                  <InputContainer>
+
+                    <Mail
+                      size={19}
+                      className="
+                        text-white/40
+                        shrink-0
+                      "
+                    />
+
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) =>
+                        setEmail(
+                          e.target.value
+                        )
+                      }
+                      placeholder="Email"
+                      required
+                      autoComplete="email"
+                      className="
+                        w-full
+                        bg-transparent
+                        outline-none
+                        text-white
+                        placeholder:text-white/30
+                      "
+                    />
+
+                  </InputContainer>
+
+
+                  {/* PASSWORD */}
+
+                  <InputContainer>
+
+                    <Lock
+                      size={19}
+                      className="
+                        text-white/40
+                        shrink-0
+                      "
+                    />
+
+                    <input
+                      type={
+                        showPassword
+                          ? 'text'
+                          : 'password'
+                      }
+                      value={password}
+                      onChange={(e) =>
+                        setPassword(
+                          e.target.value
+                        )
+                      }
+                      placeholder="Password"
+                      required
+                      autoComplete={
+                        isRegistering
+                          ? 'new-password'
+                          : 'current-password'
+                      }
+                      className="
+                        w-full
+                        bg-transparent
+                        outline-none
+                        text-white
+                        placeholder:text-white/30
+                      "
+                    />
+
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowPassword(
+                          !showPassword
+                        )
+                      }
+                      className="
+                        text-white/40
+                        hover:text-white
+                        transition-colors
+                      "
+                    >
+
+                      {showPassword
+                        ? (
+                          <EyeOff
+                            size={19}
+                          />
+                        )
+                        : (
+                          <Eye
+                            size={19}
+                          />
+                        )
+                      }
+
+                    </button>
+
+                  </InputContainer>
+
+
+                  {/* VENUE OWNER */}
+
+                  {isRegistering && (
+
+                    <label
+                      className="
+                        flex
+                        items-start
+                        gap-3
+                        cursor-pointer
+                        pt-1
+                      "
+                    >
+
+                      <input
+                        type="checkbox"
+                        checked={hasVenue}
+                        onChange={(e) =>
+                          setHasVenue(
+                            e.target.checked
+                          )
+                        }
+                        className="
+                          mt-1
+                          accent-cyan-400
+                        "
+                      />
+
+                      <div>
+
+                        <p
+                          className="
+                            text-sm
+                            text-white/80
+                          "
+                        >
+                          Gestisco un locale
+                        </p>
+
+                        <p
+                          className="
+                            text-xs
+                            text-white/35
+                            mt-0.5
+                          "
+                        >
+                          Potrai creare e gestire
+                          eventi per il tuo locale.
+                        </p>
+
+                      </div>
+
+                    </label>
+
+                  )}
+
+                </div>
+
+
+                {/* FORGOT PASSWORD */}
+
+                {!isRegistering && (
+
+                  <div
+                    className="
+                      flex
+                      justify-end
+                      mt-3
+                    "
+                  >
+
+                    <button
+                      type="button"
+                      className="
+                        text-xs
+                        text-white/45
+                        hover:text-cyan-300
+                        transition-colors
+                      "
+                    >
+                      Hai dimenticato la password?
+                    </button>
+
+                  </div>
+
+                )}
+
+
+                {/* ERROR */}
+
+                {error && (
+
+                  <div
+                    className="
+                      mt-4
+                      px-4
+                      py-3
+                      rounded-xl
+                      bg-red-500/10
+                      border
+                      border-red-500/20
+                      text-red-300
+                      text-sm
+                    "
+                  >
+                    {error}
+                  </div>
+
+                )}
+
+
+                {/* MAIN BUTTON */}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="
+                    group
+                    w-full
+                    h-[54px]
+                    mt-6
+                    rounded-2xl
+
+                    bg-gradient-to-r
+                    from-cyan-400
+                    via-blue-500
+                    to-purple-600
+
+                    font-semibold
+                    text-white
+
+                    flex
+                    items-center
+                    justify-center
+                    gap-2
+
+                    shadow-lg
+                    shadow-purple-900/20
+
+                    hover:brightness-110
+                    active:scale-[0.99]
+
+                    transition-all
+
+                    disabled:opacity-50
+                    disabled:cursor-not-allowed
+                  "
+                >
+
+                  {loading
+                    ? 'Attendi...'
+                    : isRegistering
+                    ? 'Crea account'
+                    : 'Accedi'
+                  }
+
+
+                  {!loading && (
+
+                    <ArrowRight
+                      size={18}
+                      className="
+                        transition-transform
+                        group-hover:translate-x-1
+                      "
+                    />
+
+                  )}
+
+                </button>
+
+              </form>
+
+
+              {/* =================================================
+                  DIVIDER
+              ================================================== */}
+
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-4
+                  my-6
+                "
+              >
+
+                <div
+                  className="
+                    h-px
+                    flex-1
+                    bg-white/[0.08]
+                  "
+                />
+
+                <span
+                  className="
+                    text-xs
+                    text-white/35
+                  "
+                >
+                  oppure
+                </span>
+
+                <div
+                  className="
+                    h-px
+                    flex-1
+                    bg-white/[0.08]
+                  "
+                />
+
+              </div>
+
+
+              {/* =================================================
+                  SOCIAL LOGIN
+              ================================================== */}
+
+              <div
+                className="
+                  grid
+                  grid-cols-2
+                  gap-3
+                "
+              >
+
+                {/* GOOGLE */}
+
+                <button
+                  type="button"
+                  onClick={
+                    handleGoogleLogin
+                  }
+                  disabled={loading}
+                  className="
+                    h-12
+                    rounded-xl
+
+                    border
+                    border-white/[0.09]
+
+                    bg-white/[0.04]
+
+                    flex
+                    items-center
+                    justify-center
+                    gap-2.5
+
+                    text-sm
+                    font-medium
+                    text-white/80
+
+                    hover:bg-white/[0.08]
+                    hover:border-white/[0.15]
+
+                    transition-all
+
+                    disabled:opacity-50
+                  "
+                >
+
+                  <GoogleIcon />
+
+                  Google
+
+                </button>
+
+
+                {/* FACEBOOK */}
+
+                <button
+                  type="button"
+                  onClick={
+                    handleFacebookLogin
+                  }
+                  disabled={loading}
+                  className="
+                    h-12
+                    rounded-xl
+
+                    border
+                    border-white/[0.09]
+
+                    bg-white/[0.04]
+
+                    flex
+                    items-center
+                    justify-center
+                    gap-2.5
+
+                    text-sm
+                    font-medium
+                    text-white/80
+
+                    hover:bg-white/[0.08]
+                    hover:border-white/[0.15]
+
+                    transition-all
+
+                    disabled:opacity-50
+                  "
+                >
+
+                  <FacebookIcon />
+
+                  Facebook
+
+                </button>
+
+              </div>
+
+
+              {/* FOOTER */}
+
+              <p
+                className="
+                  text-center
+                  text-[11px]
+                  leading-relaxed
+                  text-white/30
+                  mt-7
+                "
+              >
+                Continuando accetti i nostri{' '}
+
+                <button
+                  type="button"
+                  className="
+                    text-cyan-400
+                    hover:text-cyan-300
+                  "
+                >
+                  Termini di servizio
+                </button>
+
+                {' '}e la{' '}
+
+                <button
+                  type="button"
+                  className="
+                    text-cyan-400
+                    hover:text-cyan-300
+                  "
+                >
+                  Privacy Policy
+                </button>
+
               </p>
+
             </div>
+
           </div>
 
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Continuando, accetti i nostri Termini di Servizio e Privacy Policy
-          </p>
-        </div>
+        </section>
+
       </div>
+
     </div>
+
+  );
+}
+
+
+/*
+============================================================
+INPUT CONTAINER
+============================================================
+*/
+
+function InputContainer({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+
+  return (
+
+    <div
+      className="
+        h-[54px]
+        px-4
+
+        flex
+        items-center
+        gap-3
+
+        rounded-xl
+
+        bg-white/[0.035]
+
+        border
+        border-white/[0.10]
+
+        focus-within:border-cyan-400/50
+        focus-within:bg-white/[0.05]
+
+        transition-all
+      "
+    >
+      {children}
+    </div>
+
+  );
+}
+
+
+/*
+============================================================
+HERO FEATURE
+============================================================
+*/
+
+function HeroFeature({
+  icon,
+  text,
+}: {
+  icon: React.ReactNode;
+  text: string;
+}) {
+
+  return (
+
+    <div
+      className="
+        flex
+        items-center
+        gap-2
+      "
+    >
+
+      <span
+        className="
+          text-cyan-300
+        "
+      >
+        {icon}
+      </span>
+
+      {text}
+
+    </div>
+
+  );
+}
+
+
+/*
+============================================================
+FLÖDE LOGO
+============================================================
+*/
+function FlodeLogo({
+  centered = false,
+}: {
+  centered?: boolean;
+}) {
+  return (
+    <div
+      className={`
+        flex
+        items-center
+        ${centered ? 'justify-center' : ''}
+      `}
+    >
+      <img
+        src={flodeLogo}
+        alt="FLÖDE - Live what's around you"
+        className="
+          w-auto
+          h-[80px]
+          sm:h-[90px]
+          lg:h-[105px]
+          object-contain
+        "
+      />
+    </div>
+  );
+}
+
+
+/*
+============================================================
+GOOGLE ICON
+============================================================
+*/
+
+function GoogleIcon() {
+
+  return (
+
+    <svg
+      width="19"
+      height="19"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+
+      <path
+        fill="#4285F4"
+        d="M21.35 12.25c0-.74-.07-1.45-.19-2.13H12v4.03h5.24a4.48 4.48 0 0 1-1.94 2.94v2.61h3.14c1.84-1.69 2.91-4.18 2.91-7.45Z"
+      />
+
+      <path
+        fill="#34A853"
+        d="M12 21.75c2.62 0 4.82-.87 6.43-2.35l-3.14-2.61c-.87.58-1.98.93-3.29.93-2.53 0-4.67-1.71-5.44-4.01H3.32v2.69A9.72 9.72 0 0 0 12 21.75Z"
+      />
+
+      <path
+        fill="#FBBC05"
+        d="M6.56 13.71A5.84 5.84 0 0 1 6.25 12c0-.59.1-1.16.31-1.71V7.6H3.32A9.73 9.73 0 0 0 2.25 12c0 1.57.38 3.06 1.07 4.4l3.24-2.69Z"
+      />
+
+      <path
+        fill="#EA4335"
+        d="M12 6.28c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.82 3.36 14.62 2.25 12 2.25A9.72 9.72 0 0 0 3.32 7.6l3.24 2.69c.77-2.3 2.91-4.01 5.44-4.01Z"
+      />
+
+    </svg>
+
+  );
+}
+
+
+/*
+============================================================
+FACEBOOK ICON
+============================================================
+*/
+
+function FacebookIcon() {
+
+  return (
+
+    <svg
+      width="19"
+      height="19"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+
+      <path
+        fill="#1877F2"
+        d="
+          M24 12.073
+          C24 5.405
+          18.627 0
+          12 0
+          S0 5.405
+          0 12.073
+          C0 18.1
+          4.388 23.094
+          10.125 24
+          v-8.437
+          H7.078
+          v-3.49
+          h3.047
+          V9.413
+          c0-3.025
+          1.792-4.697
+          4.533-4.697
+          1.312 0
+          2.686.236
+          2.686.236
+          v2.972
+          h-1.513
+          c-1.49 0
+          -1.956.931
+          -1.956 1.887
+          v2.262
+          h3.328
+          l-.532 3.49
+          h-2.796
+          V24
+          C19.612 23.094
+          24 18.1
+          24 12.073
+          Z
+        "
+      />
+
+    </svg>
+
   );
 }

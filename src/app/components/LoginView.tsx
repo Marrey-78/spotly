@@ -3,7 +3,7 @@ import { Mail, Lock, User, ArrowRight, Sparkles, Calendar, MapPin, Heart } from 
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { loginUser, registerUser , loginWithFirebase} from '../api/auth';
-import { auth, googleProvider, signInWithPopup } from '../../firebase';
+import { auth, googleProvider, facebookProvider,signInWithPopup } from '../../firebase';
 
 interface LoginViewProps {
   onLogin: (userData: {
@@ -45,6 +45,28 @@ const handleGoogleLogin = async () => {
   } catch (error) {
     console.error('Errore login Google:', error);
     alert('Accesso con Google non riuscito');
+  }
+};
+
+const handleFacebookLogin = async () => {
+  try {
+    const result = await signInWithPopup(auth, facebookProvider);
+
+    const idToken = await result.user.getIdToken();
+
+    const backendResult = await loginWithFirebase(idToken);
+
+    localStorage.setItem('token', backendResult.token);
+    localStorage.setItem(
+      'userData',
+      JSON.stringify(backendResult.user)
+    );
+
+    onLogin(backendResult.user);
+
+  } catch (error) {
+    console.error('Errore login Facebook:', error);
+    alert('Accesso con Facebook non riuscito');
   }
 };
 
@@ -277,6 +299,27 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </svg>
                         
                 Continua con Google
+              </button>
+            </div>
+
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={handleFacebookLogin}
+                className="w-full h-12 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 font-medium text-gray-700 shadow-sm"
+              >
+                <svg
+                  className="w-5 h-5"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    fill="#1877F2"
+                    d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.972h-1.513c-1.49 0-1.956.931-1.956 1.887v2.262h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"
+                  />
+                </svg>
+                        
+                Continua con Facebook
               </button>
             </div>
 

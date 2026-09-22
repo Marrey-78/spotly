@@ -12,6 +12,7 @@ import { getPublicEvents, getNearbyEvents, getEventsByCity } from './app/api/pub
 import { getFavoriteEvents, addFavoriteEvent, removeFavoriteEvent, getFavoriteVenues, addFavoriteVenue, removeFavoriteVenue,
   getFavoriteOrganizers, addFavoriteOrganizer, removeFavoriteOrganizer} from './app/api/favorites';
 import { getMyProfile, updateMyProfile } from './app/api/users';
+import { AdminView } from  './app/components/AdminView'
 
 // Login
 interface UserData {
@@ -19,7 +20,7 @@ interface UserData {
   name: string;
   email: string;
   avatar: string;
-  role: 'user' | 'venue_owner';
+  role: 'user' | 'venue_owner' | 'admin';
 }
 
 export default function App() {
@@ -463,10 +464,18 @@ export default function App() {
             onToggleOrganizerFavorite={toggleOrganizerFavorite}
           />
         )}
+        {activeSection === 'admin' && userData?.role === 'admin' && (
+          <AdminView />
+        )}
       </div>
 
       {/* Bottom Navigation */}
-      <BottomNav activeSection={activeSection} onSectionChange={setActiveSection}  isVenueOwner={userData?.role === 'venue_owner'} />
+      <BottomNav
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        isVenueOwner={userData?.role === 'venue_owner'}
+        isAdmin={userData?.role === 'admin'}
+      />
 
       {/* Event Detail Modal */}
       {selectedEvent && (

@@ -1,19 +1,56 @@
-import { Map, List, User, Store } from 'lucide-react';
+import { Map, List, User, Store, Shield } from 'lucide-react';
 
-export type NavSection = 'home' | 'events' | 'venues' | 'profile';
+export type NavSection =
+  | 'home'
+  | 'events'
+  | 'venues'
+  | 'admin'
+  | 'profile';
 
 interface BottomNavProps {
   activeSection: NavSection;
   onSectionChange: (section: NavSection) => void;
   isVenueOwner?: boolean;
+  isAdmin?: boolean;
 }
 
-export function BottomNav({ activeSection, onSectionChange, isVenueOwner = false }: BottomNavProps) {
+export function BottomNav({
+  activeSection,
+  onSectionChange,
+  isVenueOwner = false,
+  isAdmin = false,
+}: BottomNavProps) {
   const navItems = [
-    { id: 'events' as NavSection, label: 'Eventi', icon: List, show: true },
-    { id: 'home' as NavSection, label: 'Home', icon: Map, show: true },
-    { id: 'venues' as NavSection, label: 'Locali', icon: Store, show: isVenueOwner },
-    { id: 'profile' as NavSection, label: 'Profilo', icon: User, show: true },
+    {
+      id: 'events' as NavSection,
+      label: 'Eventi',
+      icon: List,
+      show: true,
+    },
+    {
+      id: 'home' as NavSection,
+      label: 'Home',
+      icon: Map,
+      show: true,
+    },
+    {
+      id: 'venues' as NavSection,
+      label: 'Locali',
+      icon: Store,
+      show: isVenueOwner,
+    },
+    {
+      id: 'admin' as NavSection,
+      label: 'Admin',
+      icon: Shield,
+      show: isAdmin,
+    },
+    {
+      id: 'profile' as NavSection,
+      label: 'Profilo',
+      icon: User,
+      show: true,
+    },
   ];
 
   return (

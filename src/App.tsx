@@ -436,25 +436,27 @@ export default function App() {
         )}
         
         {activeSection === 'profile' &&  userData && (
-          <ProfileView
-            favoriteEvents={favoriteEvents}
-            favorites={favorites}
-            onToggleFavorite={toggleFavorite}
-            onEventClick={handleEventClick}
-            userData={userData}
-            onLogout={handleLogout}
-            favoritesCount={favorites.size}
-            favoriteVenues={favoriteVenues}
-            favoriteOrganizers={favoriteOrganizers}
-            venueFavorites={venueFavorites}
-            organizerFavorites={organizerFavorites}
-            onToggleVenueFavorite={toggleVenueFavorite}
-            onToggleOrganizerFavorite={toggleOrganizerFavorite}
-            onUpdateProfile={async (data) => {
+        <ProfileView
+          favoriteEvents={favoriteEvents}
+          favorites={favorites}
+          onToggleFavorite={toggleFavorite}
+          onEventClick={handleEventClick}
+          userData={userData}
+          onLogout={handleLogout}
+                
+          favoriteVenues={favoriteVenues}
+          favoriteOrganizers={favoriteOrganizers}
+          venueFavorites={venueFavorites}
+          organizerFavorites={organizerFavorites}
+                
+          onToggleVenueFavorite={toggleVenueFavorite}
+          onToggleOrganizerFavorite={toggleOrganizerFavorite}
+                
+          onUpdateProfile={async (data) => {
             const updated = await updateMyProfile(data);
             setUserData(updated);
-            }}
-          />
+          }}
+        />
         )}
         {activeSection === 'venues' && userData?.role === 'venue_owner' && (
           <VenuesView

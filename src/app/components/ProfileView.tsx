@@ -19,7 +19,7 @@ interface ProfileViewProps {
     city?: string;
   };
   onLogout: () => void;
-  favoritesCount?: number;
+
 
   favoriteVenues: any[];
   favoriteOrganizers: any[];
@@ -41,6 +41,8 @@ export function ProfileView({
   favoriteVenues,
   favoriteOrganizers,
   favorites,
+  venueFavorites,
+  organizerFavorites,
   onToggleFavorite,
   onToggleVenueFavorite,
   onToggleOrganizerFavorite,
@@ -48,7 +50,6 @@ export function ProfileView({
   userData,
   onLogout,
   onUpdateProfile,
-  favoritesCount,
 }: ProfileViewProps) {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
@@ -88,9 +89,9 @@ export function ProfileView({
   const favoriteType = Object.entries(eventsByType).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Nessuno';
 
   const totalFavorites =
-    (favoritesCount ?? favoriteEvents.length) +
-    favoriteVenues.length +
-    favoriteOrganizers.length;
+    favorites.size +
+    venueFavorites.size +
+    organizerFavorites.size;
 
   const handleAvatarUpload = async (file: File) => {
     try {

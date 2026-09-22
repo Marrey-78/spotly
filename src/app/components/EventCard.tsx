@@ -1,6 +1,8 @@
 import { Heart, Clock, MapPin, Music, Theater, Film, Utensils } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import type { Event } from '../types/event';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { trackAnalytics } from '../api/analytics';
 
 interface EventCardProps {
   event: Event;
@@ -10,6 +12,43 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, isFavorite, onToggleFavorite, onEventClick }: EventCardProps) {
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const impressionTracked = useRef(false);
+
+  useEffect(() => {
+    const element = cardRef.current;
+
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (
+          entry.isIntersecting &&
+          entry.intersectionRatio >= 0.5 &&
+          !impressionTracked.current
+        ) {
+          impressionTracked.current = true;
+
+          trackAnalytics({
+            event_type: 'event_impression',
+            event_id: event.id,
+          });
+
+          observer.disconnect();
+        }
+      },
+      {
+        threshold: 0.5,
+      }
+    );
+
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [event.id]);
+
   const getEventIcon = () => {
     switch (event.type) {
       case 'club':
@@ -47,10 +86,11 @@ export function EventCard({ event, isFavorite, onToggleFavorite, onEventClick }:
   const Icon = getEventIcon();
 
   return (
-    <div
-      onClick={() => onEventClick?.(event)}
-      className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-    >
+      <div
+        ref={cardRef}
+        onClick={() => onEventClick?.(event)}
+        className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      >
       <div className="relative h-40">
         <ImageWithFallback
           src={event.image}
@@ -64,6 +104,14 @@ export function EventCard({ event, isFavorite, onToggleFavorite, onEventClick }:
         <button
           onClick={(e) => {
             e.stopPropagation();
+          
+            if (!isFavorite) {
+              trackAnalytics({
+                event_type: 'event_favorite',
+                event_id: event.id,
+              });
+            }
+          
             onToggleFavorite(event.id);
           }}
           className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:scale-110 transition-transform"

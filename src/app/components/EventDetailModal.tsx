@@ -2,6 +2,8 @@ import { X, MapPin, Clock, Heart, Music, Theater, Film, Utensils, Calendar } fro
 import type { Event } from '../types/event';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useState } from 'react';
+import { useEffect } from 'react';
+import { trackAnalytics } from '../api/analytics';
 
 interface EventDetailModalProps {
   event: Event | null;
@@ -47,6 +49,15 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
     }
   };
 
+  useEffect(() => {
+    if (!event?.id) return;
+
+    trackAnalytics({
+      event_type: 'event_view',
+      event_id: event.id,
+    });
+  }, [event?.id]);
+
   const Icon = getEventIcon();
 
   const formatDate = (dateString: string) => {
@@ -62,6 +73,17 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
   // Pop - up
   const [showNavigationModal, setShowNavigationModal] = useState(false);
 
+  const handleToggleFavorite = () => {
+    // Tracciamo solo l'aggiunta, non la rimozione
+    if (!isFavorite) {
+      trackAnalytics({
+        event_type: 'event_favorite',
+        event_id: event.id,
+      });
+    }
+
+    onToggleFavorite(event.id);
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -117,7 +139,14 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
 
               {/* 🧭 NAVIGAZIONE */}
               <button
-                onClick={() => setShowNavigationModal(true)}
+                onClick={() => {
+                  trackAnalytics({
+                    event_type: 'directions_click',
+                    event_id: event.id,
+                  });
+                
+                  setShowNavigationModal(true);
+                }}
                 className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md hover:bg-indigo-700 transition"
                 title="Naviga"
               >
@@ -160,7 +189,7 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
           {/* Actions */}
           <div className="flex gap-3">
             <button
-              onClick={() => onToggleFavorite(event.id)}
+              onClick={handleToggleFavorite}
               className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
                 isFavorite
                   ? 'bg-red-50 text-red-600 hover:bg-red-100'

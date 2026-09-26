@@ -429,7 +429,7 @@ useEffect(() => {
   const getIcon = (type: Event['type']) => {
     switch (type) {
       case 'club':
-      case 'live_music':
+      case 'concert':
         return Music;
       case 'theater':
         return Theater;
@@ -446,7 +446,7 @@ useEffect(() => {
     switch (type) {
       case 'club':
         return 'bg-purple-500';
-      case 'live_music':
+      case 'concert':
         return 'bg-pink-500';
       case 'theater':
         return 'bg-blue-500';
@@ -466,7 +466,7 @@ useEffect(() => {
     switch (type) {
       case 'club':
         return 'Discoteca';
-      case 'live_music':
+      case 'concert':
         return 'Concerto';
       case 'theater':
         return 'Teatro';

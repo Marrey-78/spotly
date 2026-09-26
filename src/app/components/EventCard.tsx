@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import type { Event } from '../types/event';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { trackAnalytics } from '../api/analytics';
+import { flodeTheme } from '../theme/flodeTheme';
 
 interface EventCardProps {
   event: Event;
@@ -66,6 +67,35 @@ export function EventCard({ event, isFavorite, onToggleFavorite, onEventClick }:
     }
   };
 
+    const getEventColor = () => {
+    switch (event.type) {
+      case 'club':
+        return flodeTheme.colors.purple;
+
+      case 'concert':
+      case 'live_music':
+        return flodeTheme.colors.cyan;
+
+      case 'theater':
+        return flodeTheme.colors.blue;
+
+      case 'cinema':
+        return '#6366F1';
+
+      case 'restaurant':
+        return '#A855F7';
+
+      case 'pub':
+      case 'bar':
+        return '#7C3AED';
+
+      default:
+        return flodeTheme.colors.blue;
+    }
+  };
+
+  const eventColor = getEventColor();
+
   const getEventTypeLabel = () => {
     switch (event.type) {
       case 'club':
@@ -85,59 +115,128 @@ export function EventCard({ event, isFavorite, onToggleFavorite, onEventClick }:
 
   const Icon = getEventIcon();
 
-  return (
+ return (
+  <div
+    ref={cardRef}
+    onClick={() => onEventClick?.(event)}
+    className="
+      bg-white
+      rounded-2xl
+      overflow-hidden
+      border border-slate-100
+      shadow-sm
+      hover:shadow-lg
+      hover:-translate-y-0.5
+      transition-all duration-300
+      cursor-pointer
+    "
+  >
+    {/* IMAGE */}
+    <div className="relative h-40">
+      <ImageWithFallback
+        src={event.image}
+        alt={event.title}
+        className="w-full h-full object-cover"
+      />
+
+      {/* leggero gradient sull'immagine */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+
+      {/* EVENT TYPE */}
       <div
-        ref={cardRef}
-        onClick={() => onEventClick?.(event)}
-        className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+        className="
+          absolute top-3 left-3
+          px-2.5 py-1
+          rounded-full
+          flex items-center gap-1.5
+          text-white
+          backdrop-blur-md
+          shadow-md
+        "
+        style={{
+          backgroundColor: `${eventColor}E6`,
+          boxShadow: `0 0 12px ${eventColor}40`,
+        }}
       >
-      <div className="relative h-40">
-        <ImageWithFallback
-          src={event.image}
-          alt={event.title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1">
-          <Icon className="w-3 h-3 text-indigo-600" />
-          <span className="text-xs font-medium text-gray-800">{getEventTypeLabel()}</span>
-        </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-          
-            if (!isFavorite) {
-              trackAnalytics({
-                event_type: 'event_favorite',
-                event_id: event.id,
-              });
-            }
-          
-            onToggleFavorite(event.id);
-          }}
-          className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:scale-110 transition-transform"
-        >
-          <Heart
-            className={`w-4 h-4 ${
-              isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'
-            }`}
-          />
-        </button>
+        <Icon className="w-3 h-3" />
+
+        <span className="text-xs font-semibold">
+          {getEventTypeLabel()}
+        </span>
       </div>
-      
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 mb-1">{event.title}</h3>
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-          <MapPin className="w-4 h-4" />
-          <span>{event.venue}</span>
+
+      {/* FAVORITE */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+
+          if (!isFavorite) {
+            trackAnalytics({
+              event_type: 'event_favorite',
+              event_id: event.id,
+            });
+          }
+
+          onToggleFavorite(event.id);
+        }}
+        className="
+          absolute top-3 right-3
+          w-9 h-9
+          bg-[#0B1220]/85
+          backdrop-blur-md
+          rounded-xl
+          flex items-center justify-center
+          border border-white/10
+          shadow-lg
+          hover:scale-110
+          transition-all duration-200
+        "
+      >
+        <Heart
+          className={`w-4 h-4 transition-all ${
+            isFavorite
+              ? 'fill-cyan-400 text-cyan-400'
+              : 'text-white'
+          }`}
+        />
+      </button>
+    </div>
+
+    {/* CONTENT */}
+    <div className="p-4">
+
+      <h3 className="font-semibold text-slate-900 mb-2 truncate">
+        {event.title}
+      </h3>
+
+      <div className="flex items-center gap-2 text-sm text-slate-500 mb-3">
+        <MapPin className="w-4 h-4 text-slate-400" />
+        <span className="truncate">{event.venue}</span>
+      </div>
+
+      <div className="flex items-center justify-between">
+
+        <div className="flex items-center gap-1.5 text-sm text-slate-500">
+          <Clock className="w-4 h-4 text-cyan-600" />
+          <span>{event.time}</span>
         </div>
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-1 text-gray-600">
-            <Clock className="w-4 h-4" />
-            <span>{event.time}</span>
-          </div>
-          <span className="font-semibold text-indigo-600">{event.price}</span>
-        </div>
+
+        <span
+          className="
+            font-bold
+            text-transparent
+            bg-clip-text
+            bg-gradient-to-r
+            from-cyan-500
+            via-blue-500
+            to-violet-500
+          "
+        >
+          {event.price}
+        </span>
+
       </div>
     </div>
-  );
+  </div>
+);
 }

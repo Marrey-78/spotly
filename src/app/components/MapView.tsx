@@ -11,6 +11,8 @@ import {
   Utensils,
   Clock,
   MapPinIcon,
+  Navigation,
+  Moon,
 } from 'lucide-react';
 import type { Event } from '../types/event';
 import { useUserLocation } from './useUserLocation';
@@ -631,7 +633,7 @@ useEffect(() => {
                     onClick={() => handleCardClick(event)}
                     className={`flex-shrink-0 w-72 rounded-2xl overflow-hidden transition-all duration-200 ${
                       isActive
-                        ? 'scale-[1.03] ring-2 ring-indigo-600 bg-white shadow-md'
+                        ? 'scale-[1.03] ring-2 ring-cyan-400 bg-white shadow-md'
                         : 'bg-white/95 shadow-md'
                     }`}
                   >
@@ -664,7 +666,7 @@ useEffect(() => {
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1 text-indigo-600 text-xs font-medium">
+                        <div className="flex items-center gap-1 text-cyan-600 text-xs font-medium">
                           <Clock className="w-3 h-3" />
                           {event.time}
                         </div>
@@ -681,21 +683,71 @@ useEffect(() => {
         </div>
       )}
 
-      {/* 🌙 DARK MODE */}
-      <button
-        onClick={() => setDarkMode(!darkMode)}
-        className="absolute bottom-24 right-4 z-30 bg-white rounded-full shadow-xl p-4"
-      >
-        🌙
-      </button>
-      {/* 📍 CENTRA SU DI ME */}
+    {/* CONTROLLI MAPPA */}
+    <div className="absolute bottom-24 right-4 z-30 flex flex-col gap-3">
+
+      {/* Centra posizione */}
       <button
         onClick={centerOnUser}
-        className="absolute bottom-40 right-4 z-30 bg-white rounded-full shadow-xl p-4 hover:bg-gray-100"
         aria-label="Centra sulla mia posizione"
+        className="
+          w-12 h-12
+          rounded-2xl
+          flex items-center justify-center
+          bg-[#0B1220]/95
+          backdrop-blur-xl
+          border border-white/10
+          text-cyan-400
+          shadow-[0_8px_24px_rgba(0,0,0,0.30)]
+          hover:scale-105
+          hover:border-cyan-400/40
+          transition-all duration-300
+        "
       >
-        📍
+        <Navigation className="w-5 h-5 stroke-[2.3]" />
       </button>
+
+      {/* Dark mode */}
+      <button
+        onClick={() => setDarkMode(!darkMode)}
+        aria-label="Cambia stile della mappa"
+        className={`
+          w-12 h-12
+          rounded-2xl
+          flex items-center justify-center
+          backdrop-blur-xl
+          border
+          shadow-[0_8px_24px_rgba(0,0,0,0.30)]
+          hover:scale-105
+          transition-all duration-300
+          ${
+            darkMode
+              ? `
+                bg-gradient-to-br
+                from-cyan-400
+                via-blue-500
+                to-violet-500
+                border-cyan-400/40
+                text-white
+                shadow-[0_0_18px_rgba(34,211,238,0.30)]
+              `
+              : `
+                bg-[#0B1220]/95
+                border-white/10
+                text-slate-300
+                hover:border-violet-400/40
+              `
+          }
+        `}
+      >
+        <Moon
+          className={`w-5 h-5 ${
+            darkMode ? 'fill-white/20 stroke-[2.3]' : 'stroke-[2.3]'
+          }`}
+        />
+      </button>
+        
+    </div>
 
     </div>
   );

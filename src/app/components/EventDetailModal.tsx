@@ -4,6 +4,7 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { trackAnalytics } from '../api/analytics';
+import { flodeTheme } from '../theme/flodeTheme';
 
 interface EventDetailModalProps {
   event: Event | null;
@@ -31,6 +32,35 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
         return Music;
     }
   };
+
+    const getEventColor = () => {
+    switch (event.type) {
+      case 'club':
+        return flodeTheme.colors.purple;
+
+      case 'concert':
+      case 'live_music':
+        return flodeTheme.colors.cyan;
+
+      case 'theater':
+        return flodeTheme.colors.blue;
+
+      case 'cinema':
+        return '#6366F1';
+
+      case 'restaurant':
+        return '#A855F7';
+
+      case 'pub':
+      case 'bar':
+        return '#7C3AED';
+
+      default:
+        return flodeTheme.colors.blue;
+    }
+  };
+
+  const eventColor = getEventColor();
 
   const getEventTypeLabel = () => {
     switch (event.type) {
@@ -113,9 +143,23 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
           </button>
 
           {/* Type badge */}
-          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2">
-            <Icon className="w-4 h-4 text-indigo-600" />
-            <span className="text-sm font-medium text-gray-800">{getEventTypeLabel()}</span>
+          <div
+                className="
+                  absolute top-4 left-4
+                  backdrop-blur-md
+                  px-3 py-1.5
+                  rounded-full
+                  flex items-center gap-2
+                  text-white
+                  shadow-lg
+                "
+                style={{
+                  backgroundColor: `${eventColor}E6`,
+                  boxShadow: `0 0 14px ${eventColor}55`,
+                }}
+              >
+              <Icon className="w-4 h-4" />
+              <span className="text-sm font-semibold">{getEventTypeLabel()}</span>
           </div>
 
           {/* Title */}
@@ -128,9 +172,9 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
         <div className="p-6">
           {/* Info cards */}
           <div className="space-y-3 mb-6">
-            <div className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between gap-3 p-3 bg-slate-50 border border-slate-100 rounded-lg">
               <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+                <MapPin className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-gray-900">{event.venue}</p>
                   <p className="text-xs text-gray-600">Luogo dell'evento</p>
@@ -147,7 +191,19 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
                 
                   setShowNavigationModal(true);
                 }}
-                className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center shadow-md hover:bg-indigo-700 transition"
+                className="
+                  w-9 h-9
+                  rounded-xl
+                  text-white
+                  flex items-center justify-center
+                  shadow-[0_0_14px_rgba(34,211,238,0.25)]
+                  bg-gradient-to-br
+                  from-cyan-400
+                  via-blue-500
+                  to-violet-500
+                  hover:scale-105
+                  transition-all
+                "
                 title="Naviga"
               >
                 🧭
@@ -155,16 +211,16 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
             </div>
 
 
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-              <Calendar className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 p-3 bg-slate-50 border border-slate-100 rounded-lg">
+              <Calendar className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-gray-900 capitalize">{formatDate(event.date)}</p>
                 <p className="text-xs text-gray-600">Data</p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-              <Clock className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 p-3 bg-slate-50 border border-slate-100 rounded-lg">
+              <Clock className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-gray-900">{event.time}</p>
                 <p className="text-xs text-gray-600">Orario</p>
@@ -179,10 +235,17 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
           </div>
 
           {/* Price */}
-          <div className="bg-indigo-50 rounded-lg p-4 mb-6">
+          <div className="bg-gradient-to-r from-cyan-50 via-blue-50 to-violet-50 border border-cyan-100 rounded-xl p-4 mb-6">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Prezzo</span>
-              <span className="text-2xl font-bold text-indigo-600">{event.price}</span>
+              <span className="
+                                text-2xl font-bold
+                                text-transparent bg-clip-text
+                                bg-gradient-to-r
+                                from-cyan-500
+                                via-blue-500
+                                to-violet-500
+                              ">{event.price}</span>
             </div>
           </div>
 
@@ -197,7 +260,22 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
                   event_id: event.id,
                 });
               }}
-              className="w-full mb-3 py-3 px-4 rounded-lg bg-indigo-600 text-white font-semibold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors"
+              className="
+                          w-full mb-3
+                          py-3 px-4
+                          rounded-xl
+                          text-white
+                          font-semibold
+                          flex items-center justify-center gap-2
+                          bg-gradient-to-r
+                          from-cyan-400
+                          via-blue-500
+                          to-violet-500
+                          shadow-[0_6px_20px_rgba(59,130,246,0.25)]
+                          hover:shadow-[0_8px_26px_rgba(59,130,246,0.35)]
+                          hover:-translate-y-0.5
+                          transition-all duration-300
+                        "
             >
               🎟️ Acquista biglietti
             </a>

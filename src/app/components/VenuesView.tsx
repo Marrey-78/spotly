@@ -7,6 +7,7 @@ import { Input } from './ui/input';
 import { EventsManagerView } from './EventsManagerView';
 import { getMyOrganizers, createOrganizer, deleteOrganizer, updateOrganizer} from '../api/organizers';
 import { OrganizerEventsManagerView } from './OrganizerEventsManager';
+import { AnalyticsView } from './AnalyticsView';
 
 interface VenueType {
   id: string;
@@ -64,6 +65,12 @@ export function VenuesView({
   const [selectedOrganizer, setSelectedOrganizer] = useState<Organizer | null>(null);
   const [editingVenue, setEditingVenue] = useState<Venue | null>(null);
   const [editingOrganizer, setEditingOrganizer] = useState<Organizer | null>(null);
+
+  const [analyticsEntity, setAnalyticsEntity] = useState<{
+    type: 'venue' | 'organizer';
+    id: string;
+    name: string;
+  } | null>(null);
   
 
   const [organizerFormData, setOrganizerFormData] = useState({
@@ -286,6 +293,24 @@ export function VenuesView({
     );
   }
 
+  if (analyticsEntity) {
+    const token = localStorage.getItem('token');
+
+    if (!token) {
+        return null;
+    }
+
+    return (
+      <AnalyticsView
+        entityType={analyticsEntity.type}
+        entityId={analyticsEntity.id}
+        entityName={analyticsEntity.name}
+        token={token}
+        onBack={() => setAnalyticsEntity(null)}
+      />
+    );
+  }
+
   if (selectedVenue) {
     return (
       <EventsManagerView
@@ -330,6 +355,7 @@ export function VenuesView({
           >
             Organizzatori
           </button>
+          
         </div>
         <p className="text-gray-600">
           Gestisci i locali collegati al tuo account.
@@ -634,6 +660,20 @@ export function VenuesView({
                     >
                       Gestisci eventi
                     </Button>
+
+                    <Button
+                      onClick={() =>
+                        setAnalyticsEntity({
+                          type: 'venue',
+                          id: venue.id,
+                          name: venue.name,
+                        })
+                      }
+                      className="w-full mt-2 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                      variant="ghost"
+                    >
+                      Statistiche
+                    </Button>
                     
                     <Button
                       onClick={() => startEditVenue(venue)}
@@ -923,7 +963,21 @@ export function VenuesView({
                       >
                         Gestisci eventi
                       </Button>
-                    
+                      
+                      <Button
+                          onClick={() =>
+                            setAnalyticsEntity({
+                              type: 'organizer',
+                              id: organizer.id,
+                              name: organizer.name,
+                            })
+                          }
+                          className="w-full mt-2 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                          variant="ghost"
+                        >
+                          Statistiche
+                      </Button>
+                      
                       <Button
                         onClick={() => startEditOrganizer(organizer)}
                         className="w-full mt-2 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"

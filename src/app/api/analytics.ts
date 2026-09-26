@@ -2,9 +2,11 @@ const API_URL = import.meta.env.VITE_API_URL;
 
 export type AnalyticsEventType =
   | 'venue_view'
+  | 'organizer_view'
   | 'event_impression'
   | 'event_view'
   | 'venue_favorite'
+  | 'organizer_favorite'
   | 'event_favorite'
   | 'website_click'
   | 'instagram_click'
@@ -14,6 +16,7 @@ export type AnalyticsEventType =
 interface TrackAnalyticsPayload {
   event_type: AnalyticsEventType;
   venue_id?: string;
+  organizer_id?: string;
   event_id?: string;
 }
 

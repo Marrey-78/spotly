@@ -12,4 +12,5 @@ export interface Event {
   price: string;
   latitude: number;
   longitude: number;
+  ticket_url?: string;
 }

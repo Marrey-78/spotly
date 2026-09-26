@@ -13,6 +13,7 @@ import { getFavoriteEvents, addFavoriteEvent, removeFavoriteEvent, getFavoriteVe
   getFavoriteOrganizers, addFavoriteOrganizer, removeFavoriteOrganizer} from './app/api/favorites';
 import { getMyProfile, updateMyProfile } from './app/api/users';
 import { AdminView } from  './app/components/AdminView'
+import { trackAnalytics } from './app/api/analytics';
 
 // Login
 interface UserData {
@@ -94,6 +95,9 @@ export default function App() {
       type: event.category || 'event',
       price: event.price ? `€${event.price}` : 'Gratis',
       image: event.image_url,
+
+      // Link biglietteria
+      ticket_url: event.ticket_url,
     }));
   };
 
@@ -309,8 +313,14 @@ export default function App() {
           prev.filter((venue) => venue.id !== venueId)
         );
       } else {
-        await addFavoriteVenue(venueId);
-        await loadVenueFavorites();
+            await addFavoriteVenue(venueId);
+
+            trackAnalytics({
+              event_type: 'venue_favorite',
+              venue_id: venueId,
+            });
+          
+            await loadVenueFavorites();
       }
     } catch (error) {
       console.error('Errore aggiornamento locale preferito:', error);
@@ -336,6 +346,11 @@ export default function App() {
         );
       } else {
         await addFavoriteOrganizer(organizerId);
+        trackAnalytics({
+          event_type: 'organizer_favorite',
+          organizer_id: organizerId,
+        });
+      
         await loadOrganizerFavorites();
       }
     } catch (error) {

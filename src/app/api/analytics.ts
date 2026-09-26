@@ -25,28 +25,36 @@ function getSessionId(): string {
 
   if (!sessionId) {
     sessionId = crypto.randomUUID();
-    localStorage.setItem('flode_session_id', sessionId);
+    localStorage.setItem(
+      'flode_session_id',
+      sessionId
+    );
   }
 
   return sessionId;
 }
 
 export async function trackAnalytics(
-  data: TrackAnalyticsPayload
-): Promise<void> {
+  payload: TrackAnalyticsPayload
+) {
   try {
     await fetch(`${API_URL}/analytics/track`, {
       method: 'POST',
+
       headers: {
         'Content-Type': 'application/json',
       },
+
       body: JSON.stringify({
-        ...data,
+        ...payload,
         session_id: getSessionId(),
       }),
     });
+
   } catch (error) {
-    // Analytics non deve mai bloccare l'utilizzo dell'app
-    console.error('Analytics error:', error);
+    console.error(
+      'Analytics tracking error:',
+      error
+    );
   }
 }

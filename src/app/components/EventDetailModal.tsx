@@ -186,6 +186,23 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
             </div>
           </div>
 
+          {event.ticket_url && (
+            <a
+              href={event.ticket_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                trackAnalytics({
+                  event_type: 'ticket_click',
+                  event_id: event.id,
+                });
+              }}
+              className="w-full mb-3 py-3 px-4 rounded-lg bg-indigo-600 text-white font-semibold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors"
+            >
+              🎟️ Acquista biglietti
+            </a>
+          )}
+
           {/* Actions */}
           <div className="flex gap-3">
             <button

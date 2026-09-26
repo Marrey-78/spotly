@@ -16,6 +16,7 @@ import type { Event } from '../types/event';
 import { useUserLocation } from './useUserLocation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { darkMapStyle } from '../maps/darkMapStyle';
+import { flodeTheme } from '../theme/flodeTheme';
 
 /* ---------- MAP CONFIG ---------- */
 
@@ -445,20 +446,27 @@ useEffect(() => {
   const getColor = (type: Event['type']) => {
     switch (type) {
       case 'club':
-        return 'bg-purple-500';
+        return flodeTheme.colors.purple;
+
       case 'concert':
-        return 'bg-pink-500';
+      case 'live_music':
+        return flodeTheme.colors.cyan;
+
       case 'theater':
-        return 'bg-blue-500';
+        return flodeTheme.colors.blue;
+
       case 'cinema':
-        return 'bg-orange-500';
+        return '#6366F1';
+
       case 'restaurant':
-        return 'bg-green-500';
+        return '#A855F7';
+
       case 'pub':
       case 'bar':
-         return 'bg-yellow-500';
+        return '#7C3AED';
+
       default:
-        return 'bg-gray-500';
+        return flodeTheme.colors.blue;
     }
   };
 
@@ -487,7 +495,7 @@ useEffect(() => {
     switch (type) {
       case 'club':
         return '🎉';
-      case 'live_music':
+      case 'concert':
         return '🎵';
       case 'theater':
         return '🎭';
@@ -564,15 +572,21 @@ useEffect(() => {
                 onClick={() => handleMarkerClick(event)}
                 className="relative -translate-x-1/2 -translate-y-1/2"
               >
-              <div
-                className={`w-12 h-12 rounded-full ${color} shadow-xl border-2 flex items-center justify-center text-xl ${
-                  isActive
-                    ? 'border-black scale-125'
-                    : 'border-white'
-                }`}
-              >
-                <span>{getMarkerEmoji(event.type)}</span>
-              </div>
+            <div
+              className={`w-12 h-12 rounded-full shadow-xl border-2 flex items-center justify-center text-xl transition-all ${
+                isActive
+                  ? 'border-white scale-125'
+                  : 'border-white/80'
+              }`}
+              style={{
+                backgroundColor: color,
+                boxShadow: isActive
+                  ? `0 0 24px ${color}`
+                  : `0 4px 14px rgba(0,0,0,0.30)`,
+              }}
+            >
+              <span>{getMarkerEmoji(event.type)}</span>
+            </div>
               </button>
             </OverlayView>
           );
@@ -628,7 +642,11 @@ useEffect(() => {
                         className="w-full h-full object-cover"
                       />
                       <div
-                        className={`absolute top-3 right-3 ${color} text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1`}
+                        className="absolute top-3 right-3 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 backdrop-blur-md"
+                        style={{
+                          backgroundColor: `${color}E6`,
+                          boxShadow: `0 0 12px ${color}55`,
+                        }}
                       >
                         <Icon className="w-3 h-3" />
                         {getTypeLabel(event.type)}

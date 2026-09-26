@@ -53,44 +53,87 @@ export function BottomNav({
     },
   ];
 
-  return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 safe-area-inset-bottom z-50">
-      <div className="flex justify-around items-center h-16 px-2">
-        {navItems
-          .filter((item) => item.show)
-          .map((item) => {
-            const Icon = item.icon;
-            const isActive = activeSection === item.id;
+ return (
+  <nav
+    className="
+      fixed bottom-0 left-0 right-0
+      bg-[#050914]/95
+      backdrop-blur-xl
+      border-t border-white/10
+      safe-area-inset-bottom
+      z-50
+      shadow-[0_-8px_30px_rgba(0,0,0,0.25)]
+    "
+  >
+    <div className="flex justify-around items-center h-16 px-2">
+      {navItems
+        .filter((item) => item.show)
+        .map((item) => {
+          const Icon = item.icon;
+          const isActive = activeSection === item.id;
 
-            return (
-              <button
-                key={item.id}
-                onClick={() => onSectionChange(item.id)}
-                className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-all duration-200 ${
+          return (
+            <button
+              key={item.id}
+              onClick={() => onSectionChange(item.id)}
+              className={`
+                relative
+                flex flex-col items-center justify-center
+                gap-1 flex-1 h-full
+                transition-all duration-300
+                ${
                   isActive
-                    ? 'text-indigo-600'
-                    : 'text-gray-500 hover:text-gray-700'
+                    ? 'text-white'
+                    : 'text-slate-500 hover:text-slate-300'
+                }
+              `}
+            >
+              <div
+                className={`
+                  relative p-2 rounded-xl
+                  transition-all duration-300
+                  ${
+                    isActive
+                      ? 'bg-gradient-to-br from-cyan-400 via-blue-500 to-violet-500 shadow-[0_0_18px_rgba(34,211,238,0.30)]'
+                      : ''
+                  }
+                `}
+              >
+                <Icon
+                  className={`w-5 h-5 transition-all duration-300 ${
+                    isActive
+                      ? 'stroke-[2.5] text-white'
+                      : 'stroke-2'
+                  }`}
+                />
+              </div>
+
+              <span
+                className={`text-[11px] transition-all duration-300 ${
+                  isActive ? 'font-semibold text-white' : 'font-medium'
                 }`}
               >
-                <div
-                  className={`p-2 rounded-xl transition-all ${
-                    isActive ? 'bg-indigo-50' : ''
-                  }`}
-                >
-                  <Icon
-                    className={`w-6 h-6 ${
-                      isActive ? 'stroke-[2.5]' : 'stroke-2'
-                    }`}
-                  />
-                </div>
+                {item.label}
+              </span>
 
-                <span className="text-xs font-medium">
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
-      </div>
-    </nav>
-  );
+              {isActive && (
+                <div
+                  className="
+                    absolute bottom-0
+                    w-8 h-[2px]
+                    rounded-full
+                    bg-gradient-to-r
+                    from-cyan-400
+                    via-blue-500
+                    to-violet-500
+                    shadow-[0_0_8px_rgba(34,211,238,0.65)]
+                  "
+                />
+              )}
+            </button>
+          );
+        })}
+    </div>
+  </nav>
+);
 }

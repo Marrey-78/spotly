@@ -36,12 +36,17 @@ export function EventsList({ events, favorites, onToggleFavorite, onEventClick, 
       }
       
       // Filter by search query
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
+      if (searchQuery.trim()) {
+        const query = searchQuery.trim().toLowerCase();
+      
+        const title = (event.title ?? '').toLowerCase();
+        const venue = (event.venue ?? '').toLowerCase();
+        const description = (event.description ?? '').toLowerCase();
+      
         return (
-          event.title.toLowerCase().includes(query) ||
-          event.venue.toLowerCase().includes(query) ||
-          event.description.toLowerCase().includes(query)
+          title.includes(query) ||
+          venue.includes(query) ||
+          description.includes(query)
         );
       }
       

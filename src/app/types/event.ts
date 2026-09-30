@@ -4,10 +4,10 @@ export interface Event {
   id: string;
   title: string;
   type: EventType;
-  venue: string;
+  venue: string | null;
   date: string;
   time: string;
-  description: string;
+  description: string | null;
   image: string;
   price: string;
   latitude: number;

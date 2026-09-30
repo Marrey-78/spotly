@@ -94,7 +94,7 @@ export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) 
                     from-cyan-400
                     via-blue-500
                     to-violet-500
-                    shadow-[0_0_18px_rgba(34,211,238,0.25)]
+                    shadow-[0_0_12px_rgba(34,211,238,0.18)]
                     scale-[1.03]
                   `
                   : `
@@ -122,18 +122,6 @@ export function DateSelector({ selectedDate, onDateChange }: DateSelectorProps) 
             >
               {formatDate(date)}
             </span>
-
-            {isSelected && (
-              <div
-                className="
-                  absolute -bottom-[1px]
-                  w-5 h-[2px]
-                  bg-white
-                  rounded-full
-                  shadow-[0_0_6px_rgba(255,255,255,0.8)]
-                "
-              />
-            )}
           </button>
         );
       })}

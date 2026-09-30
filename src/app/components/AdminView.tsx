@@ -104,36 +104,40 @@ export function AdminView() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50 p-4 pb-24">
+    <div className="h-full overflow-y-auto bg-slate-50 pb-24">
 
-      <div className="mb-6">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-11 h-11 rounded-xl bg-indigo-600 flex items-center justify-center">
+      <div className="relative overflow-hidden bg-[#050914] border-b border-white/10 px-5 pt-6 pb-8">
+        <div className="absolute -top-20 -right-16 w-56 h-56 rounded-full bg-cyan-400/10 blur-3xl" />
+        <div className="absolute -bottom-24 -left-16 w-56 h-56 rounded-full bg-violet-500/10 blur-3xl" />
+
+        <div className="relative flex items-center gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 via-blue-500 to-violet-500 flex items-center justify-center shadow-[0_0_18px_rgba(34,211,238,0.20)]">
             <Shield className="w-6 h-6 text-white" />
           </div>
 
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Flode Admin
-            </h1>
-
-            <p className="text-sm text-gray-500">
+            <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-cyan-400">
+              Flode Control
+            </p>
+            <h1 className="text-2xl font-bold text-white">Admin</h1>
+            <p className="text-sm text-slate-400 mt-0.5">
               Gestione contenuti della piattaforma
             </p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-md p-4 mb-6">
+      <div className="px-4 -mt-3 relative z-10">
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_14px_36px_rgba(15,23,42,0.10)] p-5 mb-6">
         <div className="flex items-center gap-2 mb-4">
-          <Store className="w-5 h-5 text-indigo-600" />
+          <Store className="w-5 h-5 text-cyan-600" />
 
-          <h2 className="text-lg font-bold text-gray-900">
+          <h2 className="text-lg font-bold text-slate-900">
             Inserisci locale
           </h2>
         </div>
 
-        <p className="text-sm text-gray-500 mb-5">
+        <p className="text-sm text-slate-500 mb-5">
           Il locale verrà creato come non rivendicato e senza proprietario.
         </p>
 
@@ -143,7 +147,7 @@ export function AdminView() {
         >
 
           <div>
-            <label className="text-sm font-medium text-gray-700">
+            <label className="text-sm font-medium text-slate-700">
               Tipo locale
             </label>
 
@@ -155,7 +159,7 @@ export function AdminView() {
                   venue_type_id: e.target.value,
                 })
               }
-              className="mt-1 w-full h-12 rounded-xl border border-gray-300 px-3"
+              className="mt-1 w-full h-12 rounded-xl border border-slate-200 bg-white px-3 text-slate-900 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/15 transition-all"
               required
             >
               {venueTypes.map((type) => (
@@ -272,8 +276,8 @@ export function AdminView() {
             }
           />
 
-          <div className="pt-2 border-t border-gray-100">
-            <label className="text-sm font-medium text-gray-700">
+          <div className="pt-2 border-t border-slate-100">
+            <label className="text-sm font-medium text-slate-700">
               Fonte
             </label>
 
@@ -289,7 +293,7 @@ export function AdminView() {
               }
             />
 
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-slate-400 mt-1">
               Pagina utilizzata per verificare le informazioni del locale.
             </p>
           </div>
@@ -297,7 +301,7 @@ export function AdminView() {
           <Button
             type="submit"
             disabled={isSaving}
-            className="w-full h-12 rounded-xl bg-indigo-600 text-white font-semibold"
+            className="w-full h-12 rounded-xl bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 text-white font-semibold shadow-[0_8px_22px_rgba(59,130,246,0.22)] hover:shadow-[0_10px_28px_rgba(59,130,246,0.30)] hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:hover:translate-y-0"
           >
             <Plus className="w-5 h-5 mr-2" />
 
@@ -307,6 +311,7 @@ export function AdminView() {
           </Button>
 
         </form>
+        </div>
       </div>
     </div>
   );

@@ -73,7 +73,6 @@ export function EventCard({ event, isFavorite, onToggleFavorite, onEventClick }:
         return flodeTheme.colors.purple;
 
       case 'concert':
-      case 'live_music':
         return flodeTheme.colors.cyan;
 
       case 'theater':

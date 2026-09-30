@@ -115,21 +115,6 @@ export function BottomNav({
               >
                 {item.label}
               </span>
-
-              {isActive && (
-                <div
-                  className="
-                    absolute bottom-0
-                    w-8 h-[2px]
-                    rounded-full
-                    bg-gradient-to-r
-                    from-cyan-400
-                    via-blue-500
-                    to-violet-500
-                    shadow-[0_0_8px_rgba(34,211,238,0.65)]
-                  "
-                />
-              )}
             </button>
           );
         })}

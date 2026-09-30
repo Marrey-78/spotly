@@ -70,18 +70,43 @@ export function EventsList({ events, favorites, onToggleFavorite, onEventClick, 
   const hasActiveFilters = selectedTypes.size > 0 || selectedDate || searchQuery;
 
   const eventTypes = [
-    { type: 'club' as const, label: 'Discoteca', icon: Music, color: 'bg-purple-500' },
-    { type: 'concert' as const, label: 'Concerto', icon: Music, color: 'bg-pink-500' },
-    { type: 'theater' as const, label: 'Teatro', icon: Theater, color: 'bg-blue-500' },
-    { type: 'cinema' as const, label: 'Cinema', icon: Film, color: 'bg-orange-500' },
-    { type: 'restaurant' as const, label: 'Ristorante', icon: Utensils, color: 'bg-green-500' },
+    {
+      type: 'club' as const,
+      label: 'Discoteca',
+      icon: Music,
+      color: 'from-violet-500 to-purple-600',
+    },
+    {
+      type: 'concert' as const,
+      label: 'Concerto',
+      icon: Music,
+      color: 'from-cyan-400 to-cyan-600',
+    },
+    {
+      type: 'theater' as const,
+      label: 'Teatro',
+      icon: Theater,
+      color: 'from-blue-400 to-blue-600',
+    },
+    {
+      type: 'cinema' as const,
+      label: 'Cinema',
+      icon: Film,
+      color: 'from-indigo-400 to-indigo-600',
+    },
+    {
+      type: 'restaurant' as const,
+      label: 'Ristorante',
+      icon: Utensils,
+      color: 'from-violet-400 to-fuchsia-600',
+    },
   ];
 
   if (filteredEvents.length === 0) {
     return (
       <div className="h-full flex flex-col">
         {showFilters && (
-          <div className="border-b border-gray-200 bg-white p-4 space-y-3">
+          <div className=" border-b border-white/10  bg-[#050914]/95  backdrop-blur-xl p-4 space-y-3">
             {/* Search bar */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -100,10 +125,10 @@ export function EventsList({ events, favorites, onToggleFavorite, onEventClick, 
                 <button
                   key={type}
                   onClick={() => toggleType(type)}
-                  className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                    selectedTypes.has(type)
-                      ? `${color} text-white`
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${
+                  selectedTypes.has(type)
+                    ? `bg-gradient-to-r ${color} text-white shadow-md border-transparent`
+                    : 'bg-[#111B2E] text-slate-400 border-white/10 hover:text-white hover:border-white/20'
                   }`}
                 >
                   <Icon className="w-3 h-3" />
@@ -114,12 +139,11 @@ export function EventsList({ events, favorites, onToggleFavorite, onEventClick, 
 
             {/* Date filter */}
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
+              <Calendar className="w-4 h-4 text-cyan-400" />
               <select
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
+                className="  flex-1  px-3 py-2  bg-[#111B2E]  border border-white/10  rounded-xl  text-sm text-slate-300  outline-none  focus:border-cyan-400/60">
                 <option value="">Tutte le date</option>
                 {uniqueDates.map(date => {
                   const dateObj = new Date(date + 'T00:00:00');
@@ -163,17 +187,16 @@ export function EventsList({ events, favorites, onToggleFavorite, onEventClick, 
   return (
     <div className="h-full flex flex-col">
       {showFilters && (
-        <div className="border-b border-gray-200 bg-white p-4 space-y-3">
+        <div className="  border-b border-white/10  bg-[#050914]/95  backdrop-blur-xl  p-4 space-y-3">
           {/* Search bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-400" />
             <input
               type="text"
               placeholder="Cerca eventi..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+             className="  w-full h-11  pl-10 pr-4  bg-[#111B2E]  border border-white/10  rounded-xl  text-sm text-white  placeholder:text-slate-500  outline-none  focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10  transition-all"   />
           </div>
 
           {/* Type filters */}

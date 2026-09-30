@@ -330,16 +330,37 @@ export function VenuesView({
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50 p-4 pb-24">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">I miei locali</h1>
-        <div className="grid grid-cols-2 gap-2 mb-6">
+    <div className="h-full overflow-y-auto bg-slate-50 p-4 pb-24">
+      <div
+        className="
+          -mx-4 -mt-4
+          px-4 pt-5 pb-5
+          mb-6
+          bg-[#050914]
+          border-b border-white/10
+        "
+      >
+        <div className="mb-5">
+          <p className="text-xs font-semibold tracking-[0.18em] text-cyan-400 uppercase mb-1">
+            Flode Business
+          </p>
+
+          <h1 className="text-2xl font-bold text-white">
+            Gestisci la tua attività
+          </h1>
+
+          <p className="text-sm text-slate-400 mt-1">
+            Locali, organizzatori, eventi e statistiche.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 p-1 bg-[#111B2E] rounded-2xl">
           <button
             onClick={() => setActiveTab('venues')}
-            className={`h-11 rounded-xl font-semibold ${
+            className={`h-11 rounded-xl font-semibold transition-all duration-300 ${
               activeTab === 'venues'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-gray-600'
+                ? 'bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 text-white shadow-[0_0_16px_rgba(34,211,238,0.20)]'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
             Locali
@@ -347,19 +368,15 @@ export function VenuesView({
           
           <button
             onClick={() => setActiveTab('organizers')}
-            className={`h-11 rounded-xl font-semibold ${
+            className={`h-11 rounded-xl font-semibold transition-all duration-300 ${
               activeTab === 'organizers'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-gray-600'
+                ? 'bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 text-white shadow-[0_0_16px_rgba(34,211,238,0.20)]'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
             Organizzatori
           </button>
-          
         </div>
-        <p className="text-gray-600">
-          Gestisci i locali collegati al tuo account.
-        </p>
       </div>
       {activeTab === 'venues' && (  
           <>    
@@ -370,7 +387,19 @@ export function VenuesView({
                 resetVenueForm();
                 setShowForm(true);
               }}
-            className="w-full h-12 rounded-xl bg-indigo-600 text-white font-semibold mb-6"
+            className="
+                        w-full h-12 rounded-xl
+                        bg-gradient-to-r
+                        from-cyan-400
+                        via-blue-500
+                        to-violet-500
+                        text-white font-semibold
+                        shadow-[0_6px_20px_rgba(59,130,246,0.20)]
+                        hover:shadow-[0_8px_26px_rgba(59,130,246,0.30)]
+                        hover:-translate-y-0.5
+                        transition-all duration-300
+                        mb-6
+                      "
           >
             <Plus className="w-5 h-5 mr-2" />
             Crea nuovo locale
@@ -596,7 +625,7 @@ export function VenuesView({
                         <h2 className="text-lg font-bold text-gray-900">
                           {venue.name}
                         </h2>
-                        <p className="text-sm text-indigo-600 font-medium">
+                        <p className="text-sm text-cyan-600 font-semibold">
                           {venue.venue_type_name}
                         </p>
                       </div>
@@ -655,7 +684,13 @@ export function VenuesView({
                     
                     <Button
                       onClick={() => setSelectedVenue(venue)}
-                      className="w-full mt-4 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                     className="
+                                 w-full mt-4 h-11 rounded-xl
+                                 bg-[#0B1220]
+                                 text-white
+                                 hover:bg-[#111B2E]
+                                 transition-all
+                               "
                       variant="ghost"
                     >
                       Gestisci eventi
@@ -669,7 +704,16 @@ export function VenuesView({
                           name: venue.name,
                         })
                       }
-                      className="w-full mt-2 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                      className="
+                                 w-full mt-2 h-11 rounded-xl
+                                 bg-slate-50
+                                 text-slate-700
+                                 border border-slate-100
+                                 hover:bg-cyan-50
+                                 hover:text-cyan-700
+                                 hover:border-cyan-100
+                                 transition-all
+                               "
                       variant="ghost"
                     >
                       Statistiche
@@ -677,7 +721,16 @@ export function VenuesView({
                     
                     <Button
                       onClick={() => startEditVenue(venue)}
-                      className="w-full mt-2 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                      className="
+                                  w-full mt-2 h-11 rounded-xl
+                                  bg-slate-50
+                                  text-slate-700
+                                  border border-slate-100
+                                  hover:bg-cyan-50
+                                  hover:text-cyan-700
+                                  hover:border-cyan-100
+                                  transition-all
+                                "
                       variant="ghost"
                     >
                       <Pencil className="w-4 h-4 mr-2" />
@@ -712,7 +765,19 @@ export function VenuesView({
                 resetOrganizerForm();
                 setShowOrganizerForm(true);
               }}
-              className="w-full h-12 rounded-xl bg-indigo-600 text-white font-semibold mb-6"
+              className="
+                          w-full h-12 rounded-xl
+                          bg-gradient-to-r
+                          from-cyan-400
+                          via-blue-500
+                          to-violet-500
+                          text-white font-semibold
+                          shadow-[0_6px_20px_rgba(59,130,246,0.20)]
+                          hover:shadow-[0_8px_26px_rgba(59,130,246,0.30)]
+                          hover:-translate-y-0.5
+                          transition-all duration-300
+                          mb-6
+                        "
             >
               + Crea organizzatore
             </Button>

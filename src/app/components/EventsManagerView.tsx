@@ -181,9 +181,9 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
 
   if (isLoading) {
     return (
-      <div className="h-full flex items-center justify-center bg-gray-50">
+      <div className="h-full flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-cyan-400 border-t-transparent" />
           <p className="text-sm text-gray-600">Caricamento eventi...</p>
         </div>
       </div>
@@ -191,24 +191,29 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
   }
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50 p-4 pb-24">
-      <button
-        onClick={onBack}
-        className="flex items-center gap-2 text-indigo-600 font-medium mb-4"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        Torna ai locali
-      </button>
+    <div className="h-full overflow-y-auto bg-slate-50 p-4 pb-24">
+      <div className="-mx-4 -mt-4 px-4 pt-4 pb-5 mb-6 bg-[#050914] border-b border-white/10">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-slate-400 hover:text-cyan-400 text-sm font-medium mb-5 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Torna ai locali
+        </button>
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{venue.name}</h1>
-        <p className="text-gray-600">Gestisci gli eventi di questo locale.</p>
+        <p className="text-xs font-semibold tracking-[0.18em] text-cyan-400 uppercase mb-1">
+          Gestione eventi
+        </p>
+        <h1 className="text-2xl font-bold text-white">{venue.name}</h1>
+        <p className="text-sm text-slate-400 mt-1">
+          Crea e gestisci gli eventi del tuo locale.
+        </p>
       </div>
 
       {!showForm && (
         <Button
           onClick={() => setShowForm(true)}
-          className="w-full h-12 rounded-xl bg-indigo-600 text-white font-semibold mb-6"
+          className="w-full h-12 rounded-xl bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 text-white font-semibold mb-6 shadow-[0_6px_20px_rgba(59,130,246,0.20)] hover:-translate-y-0.5 hover:shadow-[0_8px_26px_rgba(59,130,246,0.30)] transition-all duration-300"
         >
           <Plus className="w-5 h-5 mr-2" />
           Crea nuovo evento
@@ -218,7 +223,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
       {showForm && (
         <form
           onSubmit={handleCreateEvent}
-          className="bg-white rounded-2xl shadow-md p-4 space-y-4 mb-6"
+          className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4 mb-6"
         >
           <h2 className="text-lg font-bold text-gray-900">
             {editingEvent ? 'Modifica evento' : 'Nuovo evento'}
@@ -274,7 +279,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
             onChange={(e) =>
               setFormData({ ...formData, category: e.target.value })
             }
-            className="w-full h-12 rounded-xl border border-gray-300 px-3 bg-white text-gray-900"
+            className="w-full h-12 rounded-xl border border-slate-200 px-3 bg-white text-slate-900 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/10 transition-all"
             required
           >
             <option value="">Seleziona categoria</option>
@@ -283,8 +288,8 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
             <option value="theater">Teatro / Spettacolo</option>
             <option value="cinema">Cinema</option>
             <option value="restaurant">Ristorante / Cena</option>
-            <option value="restaurant">Pub / Bar</option>
-            <option value="restaurant">Lounge Bar</option>
+            <option value="pub">Pub / Bar</option>
+            <option value="bar">Lounge Bar</option>
           </select>
 
           <Input
@@ -351,7 +356,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
                   }
                   className={`rounded-xl overflow-hidden border-2 ${
                     formData.image_url === image.image_url
-                      ? 'border-indigo-600'
+                      ? 'border-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.20)]'
                       : 'border-transparent'
                   }`}
                 >
@@ -388,7 +393,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
 
             <Button
               type="submit"
-              className="flex-1 h-12 rounded-xl bg-indigo-600 text-white"
+              className="flex-1 h-12 rounded-xl bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 text-white"
             >
               {editingEvent ? 'Salva modifiche' : 'Salva'}
             </Button>
@@ -398,7 +403,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
 
       {events.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-md p-6 text-center">
-          <Calendar className="w-12 h-12 mx-auto text-indigo-600 mb-3" />
+          <Calendar className="w-12 h-12 mx-auto text-cyan-600 mb-3" />
           <h2 className="text-lg font-bold text-gray-900 mb-1">
             Nessun evento ancora
           </h2>
@@ -414,7 +419,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
             return(
             <div
               key={event.id}
-              className="bg-white rounded-2xl shadow-md overflow-hidden"
+              className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden"
             >
               {isEditing ? (
                 <form
@@ -443,7 +448,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
                     onChange={(e) =>
                       setFormData({ ...formData, category: e.target.value })
                     }
-                    className="w-full h-12 rounded-xl border border-gray-300 px-3 bg-white text-gray-900"
+                    className="w-full h-12 rounded-xl border border-slate-200 px-3 bg-white text-slate-900 outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/10 transition-all"
                     required
                   >
                     <option value="">Seleziona categoria</option>
@@ -511,7 +516,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
                   
                     <Button
                       type="submit"
-                      className="flex-1 h-11 rounded-xl bg-indigo-600 text-white"
+                      className="flex-1 h-11 rounded-xl bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 text-white"
                     >
                       Salva modifiche
                     </Button>
@@ -538,7 +543,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
                     </h2>
 
                     {event.category && (
-                      <p className="text-sm text-indigo-600 font-medium">
+                      <p className="text-sm text-cyan-600 font-medium">
                         {event.category}
                       </p>
                     )}
@@ -583,7 +588,7 @@ export function EventsManagerView({ venue, onBack }: EventsManagerViewProps) {
 
                   <Button
                     onClick={() => startEditEvent(event)}
-                    className="w-full mt-4 h-11 rounded-xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                    className="w-full mt-4 h-11 rounded-xl bg-cyan-50 text-cyan-600 hover:bg-cyan-100"
                     variant="ghost"
                   >
                     <Pencil className="w-4 h-4 mr-2" />

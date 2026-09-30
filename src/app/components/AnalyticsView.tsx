@@ -146,8 +146,8 @@ export function AnalyticsView({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-        <div className="text-zinc-400">
+      <div className="min-h-screen bg-[#050914] text-white flex items-center justify-center">
+        <div className="text-slate-400">
           Caricamento statistiche...
         </div>
       </div>
@@ -156,7 +156,7 @@ export function AnalyticsView({
 
   if (error || !stats) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[#050914] text-white flex items-center justify-center p-6">
         <div className="text-center">
           <p className="text-red-400 mb-4">
             {error ?? "Statistiche non disponibili"}
@@ -164,7 +164,7 @@ export function AnalyticsView({
 
           <button
             onClick={loadAnalytics}
-            className="bg-white text-black px-4 py-2 rounded-xl"
+            className="bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 text-white px-4 py-2 rounded-xl font-semibold shadow-[0_6px_18px_rgba(59,130,246,0.20)]"
           >
             Riprova
           </button>
@@ -184,27 +184,36 @@ export function AnalyticsView({
       : stats.organizer_favorites ?? 0;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white pb-24">
+    <div className="min-h-screen bg-[#050914] text-white pb-24">
 
       {/* HEADER */}
 
-      <div className="px-5 pt-6">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="text-zinc-400 mb-4"
-          >
-            ← Indietro
-          </button>
-        )}
+      <div className="relative overflow-hidden px-5 pt-6 pb-6 border-b border-white/10">
+        <div className="absolute -top-20 -right-14 w-52 h-52 rounded-full bg-cyan-400/10 blur-3xl" />
+        <div className="absolute -bottom-24 -left-16 w-52 h-52 rounded-full bg-violet-500/10 blur-3xl" />
 
-        <p className="text-sm text-zinc-500">
-          Statistiche
-        </p>
+        <div className="relative">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="text-slate-400 hover:text-white mb-5 text-sm transition-colors"
+            >
+              ← Indietro
+            </button>
+          )}
 
-        <h1 className="text-2xl font-semibold">
-          {entityName}
-        </h1>
+          <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-cyan-400">
+            Flode Analytics
+          </p>
+
+          <h1 className="text-2xl font-bold text-white mt-1">
+            {entityName}
+          </h1>
+
+          <p className="text-sm text-slate-400 mt-1">
+            Performance e interazioni della tua attività
+          </p>
+        </div>
       </div>
 
       {/* PERIOD */}
@@ -215,10 +224,10 @@ export function AnalyticsView({
             <button
               key={value}
               onClick={() => setPeriod(value)}
-              className={`px-4 py-2 rounded-full text-sm ${
+              className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
                 period === value
-                  ? "bg-white text-black"
-                  : "bg-zinc-900 text-zinc-400"
+                  ? "bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 text-white shadow-[0_0_14px_rgba(34,211,238,0.16)]"
+                  : "bg-[#0B1220] border border-white/10 text-slate-400 hover:text-white"
               }`}
             >
               {value === "7d"
@@ -265,7 +274,7 @@ export function AnalyticsView({
           Performance eventi
         </h2>
 
-        <div className="bg-zinc-900 rounded-2xl p-5 space-y-5">
+        <div className="bg-[#0B1220] border border-white/10 rounded-3xl p-5 space-y-5 shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
 
           <FunnelRow
             label="Impression"
@@ -297,7 +306,7 @@ export function AnalyticsView({
           Andamento
         </h2>
 
-        <p className="text-sm text-zinc-500 mt-1 mb-4">
+        <p className="text-sm text-slate-500 mt-1 mb-4">
           Visualizzazioni giornaliere
         </p>
 
@@ -313,7 +322,7 @@ export function AnalyticsView({
 
         <div className="space-y-3">
           {stats.top_events.length === 0 ? (
-            <div className="bg-zinc-900 rounded-2xl p-5 text-zinc-500">
+            <div className="bg-[#0B1220] border border-white/10 rounded-2xl p-5 text-slate-500">
               Nessun dato disponibile.
             </div>
           ) : (
@@ -321,12 +330,12 @@ export function AnalyticsView({
               (event, index) => (
                 <div
                   key={event.id}
-                  className="bg-zinc-900 rounded-2xl p-4"
+                  className="bg-[#0B1220] border border-white/10 rounded-2xl p-4 shadow-[0_8px_24px_rgba(0,0,0,0.14)]"
                 >
                   <div className="flex justify-between gap-4">
 
                     <div>
-                      <span className="text-xs text-zinc-500">
+                      <span className="text-xs text-slate-500">
                         #{index + 1}
                       </span>
 
@@ -340,7 +349,7 @@ export function AnalyticsView({
                         {event.views}
                       </p>
 
-                      <p className="text-xs text-zinc-500">
+                      <p className="text-xs text-slate-500">
                         visualizzazioni
                       </p>
                     </div>
@@ -386,9 +395,9 @@ function StatCard({
   change?: number | null;
 }) {
   return (
-    <div className="bg-zinc-900 rounded-2xl p-4">
+    <div className="bg-[#0B1220] border border-white/10 rounded-2xl p-4 shadow-[0_8px_24px_rgba(0,0,0,0.14)]">
 
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-slate-500">
         {title}
       </p>
 
@@ -401,7 +410,7 @@ function StatCard({
           <p
             className={`text-xs mt-2 ${
               change >= 0
-                ? "text-green-400"
+                ? "text-emerald-400"
                 : "text-red-400"
             }`}
           >
@@ -423,7 +432,7 @@ function FunnelRow({
 }) {
   return (
     <div className="flex justify-between">
-      <span className="text-zinc-400">
+      <span className="text-slate-400">
         {label}
       </span>
 
@@ -447,7 +456,7 @@ function MiniStat({
         {value.toLocaleString("it-IT")}
       </p>
 
-      <p className="text-xs text-zinc-500">
+      <p className="text-xs text-slate-500">
         {label}
       </p>
     </div>
@@ -461,7 +470,7 @@ function SimpleChart({
 }) {
   if (data.length === 0) {
     return (
-      <div className="bg-zinc-900 rounded-2xl p-5 text-zinc-500">
+      <div className="bg-[#0B1220] border border-white/10 rounded-2xl p-5 text-slate-500">
         Nessun dato disponibile.
       </div>
     );
@@ -473,7 +482,7 @@ function SimpleChart({
   );
 
   return (
-    <div className="bg-zinc-900 rounded-2xl p-4">
+    <div className="bg-[#0B1220] border border-white/10 rounded-2xl p-4 shadow-[0_8px_24px_rgba(0,0,0,0.14)]">
 
       <div className="h-40 flex items-end gap-1">
         {data.map((item) => {
@@ -487,7 +496,7 @@ function SimpleChart({
               title={`${item.day}: ${item.profile_views}`}
             >
               <div
-                className="w-full bg-white/80 rounded-t"
+                className="w-full bg-gradient-to-t from-blue-500 via-cyan-400 to-cyan-300 rounded-t shadow-[0_0_8px_rgba(34,211,238,0.16)]"
                 style={{
                   height: `${Math.max(
                     height,
@@ -500,7 +509,7 @@ function SimpleChart({
         })}
       </div>
 
-      <div className="flex justify-between mt-3 text-xs text-zinc-600">
+      <div className="flex justify-between mt-3 text-xs text-slate-600">
         <span>
           {formatDate(data[0]?.day)}
         </span>

@@ -88,6 +88,28 @@ export function ProfileView({
 
   const favoriteType = Object.entries(eventsByType).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Nessuno';
 
+  const getEventTypeLabel = (type: string) => {
+    switch (type) {
+      case 'club':
+        return 'Discoteca';
+      case 'concert':
+      case 'live_music':
+        return 'Concerto';
+      case 'theater':
+        return 'Teatro';
+      case 'cinema':
+        return 'Cinema';
+      case 'restaurant':
+        return 'Ristorante';
+      case 'pub':
+        return 'Pub';
+      case 'bar':
+        return 'Bar';
+      default:
+        return type === 'Nessuno' ? 'Nessuno' : type;
+    }
+  };
+
   const totalFavorites =
     favorites.size +
     venueFavorites.size +
@@ -139,11 +161,11 @@ export function ProfileView({
   };
 
   return (
-    <div className="h-full overflow-y-auto scrollbar-hide pb-20 bg-gradient-to-b from-gray-50 to-white">
-      <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white pt-8 pb-24 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+    <div className="h-full overflow-y-auto scrollbar-hide pb-20 bg-slate-50">
+      <div className="bg-[#050914] text-white pt-8 pb-24 relative overflow-hidden border-b border-white/10">
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-400 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-violet-500 rounded-full blur-3xl"></div>
         </div>
 
         <div className="relative z-10 px-6">
@@ -153,15 +175,15 @@ export function ProfileView({
                 <img
                   src={userData.avatar || 'https://ui-avatars.com/api/?name=User&background=6366f1&color=fff'}
                   alt={userData.name}
-                  className="w-20 h-20 rounded-full object-cover bg-white/20 backdrop-blur-sm border-4 border-white/30"
+                  className="w-20 h-20 rounded-full object-cover bg-white/20 backdrop-blur-sm border-4 border-white/20"
                 />
-                <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-green-400 rounded-full border-4 border-indigo-600"></div>
+                <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-cyan-400 rounded-full border-4 border-[#050914]"></div>
               </div>
 
               <div>
                 <h2 className="text-2xl font-bold mb-1">{userData.name}</h2>
-                <p className="text-indigo-100 text-sm">{userData.email}</p>
-                <p className="text-indigo-100 text-sm mt-1">{userData.city || 'Città non impostata'}</p>
+                <p className="text-slate-300 text-sm">{userData.email}</p>
+                <p className="text-slate-300 text-sm mt-1">{userData.city || 'Città non impostata'}</p>
                 <div className="flex items-center gap-2 mt-2">
                   <Star className="w-4 h-4 fill-yellow-300 text-yellow-300" />
                   <span className="text-sm font-medium">Utente</span>
@@ -175,17 +197,17 @@ export function ProfileView({
           </div>
 
           <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/20">
+            <div className="bg-[#111B2E]/80 backdrop-blur-md rounded-2xl p-4 text-center border border-white/10">
               <Heart className="w-6 h-6 mx-auto mb-2 fill-white text-white" />
               <p className="text-2xl font-bold">{totalFavorites}</p>
               <p className="text-xs text-white/80">Preferiti</p>
             </div>
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/20">
+            <div className="bg-[#111B2E]/80 backdrop-blur-md rounded-2xl p-4 text-center border border-white/10">
               <Calendar className="w-6 h-6 mx-auto mb-2" />
               <p className="text-2xl font-bold">{upcomingEvents}</p>
               <p className="text-xs text-white/80">In arrivo</p>
             </div>
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 text-center border border-white/20">
+            <div className="bg-[#111B2E]/80 backdrop-blur-md rounded-2xl p-4 text-center border border-white/10">
               <Trophy className="w-6 h-6 mx-auto mb-2" />
               <p className="text-2xl font-bold">{pastEvents}</p>
               <p className="text-xs text-white/80">Visitati</p>
@@ -196,16 +218,16 @@ export function ProfileView({
 
       <div className="px-6 -mt-16 relative z-20">
         <Tabs defaultValue="favorites" className="w-full">
-          <TabsList className="w-full bg-white shadow-lg rounded-2xl p-1 h-14 mb-6">
-            <TabsTrigger value="favorites" className="flex-1 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+          <TabsList className="w-full bg-[#0B1220] border border-white/10 shadow-[0_12px_30px_rgba(0,0,0,0.20)] rounded-2xl p-1 h-14 mb-6">
+            <TabsTrigger value="favorites" className="flex-1 rounded-xl text-slate-400 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-400 data-[state=active]:via-blue-500 data-[state=active]:to-violet-500 data-[state=active]:text-white">
               <Heart className="w-4 h-4 mr-2" />
               Preferiti
             </TabsTrigger>
-            <TabsTrigger value="stats" className="flex-1 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+            <TabsTrigger value="stats" className="flex-1 rounded-xl text-slate-400 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-400 data-[state=active]:via-blue-500 data-[state=active]:to-violet-500 data-[state=active]:text-white">
               <Trophy className="w-4 h-4 mr-2" />
               Statistiche
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex-1 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+            <TabsTrigger value="settings" className="flex-1 rounded-xl text-slate-400 data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-400 data-[state=active]:via-blue-500 data-[state=active]:to-violet-500 data-[state=active]:text-white">
               <Settings className="w-4 h-4 mr-2" />
               Profilo
             </TabsTrigger>
@@ -250,7 +272,7 @@ export function ProfileView({
                       <div className="flex justify-between gap-3">
                         <div>
                           <h4 className="font-bold text-gray-900">{venue.name}</h4>
-                          <p className="text-sm text-indigo-600">{venue.venue_type_name}</p>
+                          <p className="text-sm text-cyan-600">{venue.venue_type_name}</p>
                           <p className="text-sm text-gray-600 mt-1">
                             {venue.address}{venue.city ? `, ${venue.city}` : ''}
                           </p>
@@ -313,46 +335,117 @@ export function ProfileView({
           </TabsContent>
 
           <TabsContent value="stats" className="space-y-4">
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Le tue statistiche</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center">
-                      <Star className="w-6 h-6 text-white fill-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Tipo preferito</p>
-                      <p className="font-bold text-gray-900">{favoriteType}</p>
-                    </div>
+            <div className="overflow-hidden rounded-3xl bg-[#0B1220] border border-white/10 shadow-[0_16px_36px_rgba(15,23,42,0.16)]">
+              <div className="relative p-5 border-b border-white/10 overflow-hidden">
+                <div className="absolute -top-16 -right-12 w-40 h-40 rounded-full bg-cyan-400/10 blur-3xl" />
+                <div className="absolute -bottom-20 -left-10 w-40 h-40 rounded-full bg-violet-500/10 blur-3xl" />
+
+                <div className="relative">
+                  <p className="text-[10px] font-semibold tracking-[0.18em] uppercase text-cyan-400">
+                    Il tuo profilo Flode
+                  </p>
+                  <h3 className="mt-1 text-xl font-bold text-white">
+                    Le tue statistiche
+                  </h3>
+                  <p className="mt-1 text-sm text-slate-400">
+                    Un riepilogo dei contenuti che hai salvato.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 grid grid-cols-3 gap-2">
+                <div className="rounded-2xl bg-[#111B2E] border border-white/5 px-3 py-4 text-center">
+                  <Heart className="w-5 h-5 mx-auto mb-2 text-cyan-400 fill-cyan-400/20" />
+                  <p className="text-xl font-bold text-white">{totalFavorites}</p>
+                  <p className="mt-0.5 text-[10px] text-slate-500">Preferiti</p>
+                </div>
+
+                <div className="rounded-2xl bg-[#111B2E] border border-white/5 px-3 py-4 text-center">
+                  <Calendar className="w-5 h-5 mx-auto mb-2 text-blue-400" />
+                  <p className="text-xl font-bold text-white">{upcomingEvents}</p>
+                  <p className="mt-0.5 text-[10px] text-slate-500">In arrivo</p>
+                </div>
+
+                <div className="rounded-2xl bg-[#111B2E] border border-white/5 px-3 py-4 text-center">
+                  <Trophy className="w-5 h-5 mx-auto mb-2 text-violet-400" />
+                  <p className="text-xl font-bold text-white">{pastEvents}</p>
+                  <p className="mt-0.5 text-[10px] text-slate-500">Passati</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+              <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-gradient-to-r from-cyan-50 via-blue-50 to-violet-50 border border-cyan-100/70">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 shrink-0 bg-gradient-to-br from-cyan-400 via-blue-500 to-violet-500 rounded-xl flex items-center justify-center shadow-[0_0_14px_rgba(34,211,238,0.18)]">
+                    <Star className="w-5 h-5 text-white fill-white/20" />
                   </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-indigo-600">{eventsByType[favoriteType] || 0}</p>
-                    <p className="text-xs text-gray-500">eventi</p>
+                  <div className="min-w-0">
+                    <p className="text-xs text-slate-500">Categoria preferita</p>
+                    <p className="font-bold text-slate-900 truncate">
+                      {getEventTypeLabel(favoriteType)}
+                    </p>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h4 className="font-semibold text-gray-900">Eventi per categoria</h4>
-                  {Object.entries(eventsByType).length > 0 ? (
-                    Object.entries(eventsByType).map(([type, count]) => (
-                      <div key={type} className="flex items-center justify-between">
-                        <span className="text-gray-700">{type}</span>
-                        <div className="flex items-center gap-3">
-                          <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full"
-                              style={{ width: `${(count / favoriteEvents.length) * 100}%` }}
-                            ></div>
-                          </div>
-                          <span className="text-sm font-semibold text-gray-900 w-8 text-right">{count}</span>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 text-sm">Nessun dato disponibile</p>
-                  )}
+                <div className="text-right shrink-0">
+                  <p className="text-2xl font-bold text-cyan-600">
+                    {eventsByType[favoriteType] || 0}
+                  </p>
+                  <p className="text-[10px] text-slate-500">eventi salvati</p>
                 </div>
+              </div>
+
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-semibold text-slate-900">Eventi per categoria</h4>
+                  <span className="text-xs text-slate-400">{favoriteEvents.length} totali</span>
+                </div>
+
+                {Object.entries(eventsByType).length > 0 ? (
+                  <div className="space-y-4">
+                    {Object.entries(eventsByType)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([type, count]) => {
+                        const percentage = favoriteEvents.length
+                          ? Math.round((count / favoriteEvents.length) * 100)
+                          : 0;
+
+                        return (
+                          <div key={type}>
+                            <div className="flex items-center justify-between gap-3 mb-2">
+                              <span className="text-sm font-medium text-slate-700">
+                                {getEventTypeLabel(type)}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-slate-400">{percentage}%</span>
+                                <span className="min-w-6 text-right text-sm font-bold text-slate-900">
+                                  {count}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 rounded-full"
+                                style={{ width: `${percentage}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center">
+                    <Star className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+                    <p className="text-sm font-medium text-slate-600">
+                      Nessun dato disponibile
+                    </p>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Salva qualche evento per vedere le tue statistiche.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>
@@ -403,7 +496,7 @@ export function ProfileView({
                   </div>
 
                   <div className="flex gap-3 pt-2">
-                    <Button type="submit" className="flex-1 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600">
+                    <Button type="submit" className="flex-1 rounded-xl bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500">
                       Salva modifiche
                     </Button>
                     <Button type="button" onClick={handleCancelProfileEdit} variant="outline" className="flex-1 rounded-xl">
@@ -455,7 +548,7 @@ export function ProfileView({
                   onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
                   required
                 />
-                <Button type="submit" className="w-full h-11 rounded-xl bg-indigo-600 text-white">
+                <Button type="submit" className="w-full h-11 rounded-xl bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 text-white">
                   Aggiorna password
                 </Button>
               </form>
@@ -471,7 +564,7 @@ export function ProfileView({
                     <p className="text-sm text-gray-600">In arrivo</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" className="text-indigo-600">
+                <Button variant="ghost" size="sm" className="text-cyan-600">
                   Gestisci
                 </Button>
               </div>

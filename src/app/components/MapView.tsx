@@ -339,7 +339,7 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
           // 2️⃣ crea la polyline visibile
           const polyline = new google.maps.Polyline({
             path: result.routes[0].overview_path,
-            strokeColor: '#4f46e5',
+            strokeColor: flodeTheme.colors.cyan,
             strokeWeight: 5,
           });
 
@@ -433,6 +433,7 @@ useEffect(() => {
     switch (type) {
       case 'club':
       case 'concert':
+      case 'live_music':
         return Music;
       case 'theater':
         return Theater;
@@ -477,6 +478,7 @@ useEffect(() => {
       case 'club':
         return 'Discoteca';
       case 'concert':
+      case 'live_music':
         return 'Concerto';
       case 'theater':
         return 'Teatro';
@@ -498,6 +500,7 @@ useEffect(() => {
       case 'club':
         return '🎉';
       case 'concert':
+      case 'live_music':
         return '🎵';
       case 'theater':
         return '🎭';
@@ -538,7 +541,7 @@ useEffect(() => {
             mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
           >
             <div
-              className="w-5 h-5 bg-blue-600 clip-arrow border-2 border-white shadow-lg transition-transform duration-300"
+              className="w-5 h-5 bg-[#3B82F6] clip-arrow border-2 border-white shadow-lg transition-transform duration-300"
               style={{
                 transform: `translate(-50%, -50%) rotate(${heading}deg)`,
               }}
@@ -546,16 +549,6 @@ useEffect(() => {
 
           </OverlayView>
         )}
-        {navigationEvent && (
-            <div className="absolute top-4 right-4 z-50">
-              <button
-                onClick={onCancelNavigation}
-                className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-red-700 transition"
-              >
-                ✕ Termina Navigazione
-              </button>
-            </div>
-          )}
 
 
         {/* 📌 EVENTS */}
@@ -602,15 +595,79 @@ useEffect(() => {
             mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
           >
             <div className="relative -translate-x-1/2 -translate-y-1/2">
-              <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-xl border-4 border-white">
+              <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 via-blue-500 to-violet-500 rounded-full flex items-center justify-center text-white shadow-xl border-4 border-white">
                 📍
               </div>
             </div>
           </OverlayView>
         )}
-      {eta && (
-        <div className="absolute top-4 left-4 z-50 bg-black/80 text-white px-4 py-2 rounded-lg">
-          ETA: {eta}
+      {navigationEvent && (
+        <div className="absolute top-4 left-4 right-4 z-50 pointer-events-none">
+          <div
+            className="
+              pointer-events-auto
+              max-w-md mx-auto
+              bg-[#0B1220]/95
+              backdrop-blur-xl
+              border border-white/10
+              rounded-2xl
+              shadow-[0_12px_32px_rgba(0,0,0,0.35)]
+              px-4 py-3
+            "
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className="
+                  w-10 h-10 shrink-0
+                  rounded-xl
+                  flex items-center justify-center
+                  bg-gradient-to-br from-cyan-400 via-blue-500 to-violet-500
+                  shadow-[0_0_14px_rgba(34,211,238,0.20)]
+                "
+              >
+                <Navigation className="w-[18px] h-[18px] text-white stroke-[2.4]" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-semibold tracking-[0.16em] uppercase text-cyan-400">
+                  Navigazione attiva
+                </p>
+
+                <h3 className="mt-0.5 text-sm font-semibold text-white truncate">
+                  {navigationEvent.title}
+                </h3>
+
+                <div className="mt-1 flex items-center gap-2 text-xs text-slate-400">
+                  {eta && (
+                    <>
+                      <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>
+                        Arrivo tra <span className="font-semibold text-white">{eta}</span>
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <button
+                onClick={onCancelNavigation}
+                aria-label="Termina navigazione"
+                className="
+                  w-9 h-9 shrink-0
+                  rounded-xl
+                  flex items-center justify-center
+                  border border-red-400/20
+                  bg-red-500/10
+                  text-red-400
+                  hover:bg-red-500/20
+                  hover:text-red-300
+                  transition-all
+                "
+              >
+                <span className="text-lg leading-none">×</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -631,10 +688,10 @@ useEffect(() => {
                     key={event.id}
                     ref={setCardRef(event.id)}
                     onClick={() => handleCardClick(event)}
-                    className={`flex-shrink-0 w-72 rounded-2xl overflow-hidden transition-all duration-200 ${
+                    className={`flex-shrink-0 w-72 rounded-xl overflow-hidden border border-white/70 transition-all duration-200 ${
                       isActive
-                        ? 'scale-[1.03] ring-2 ring-cyan-400 bg-white shadow-md'
-                        : 'bg-white/95 shadow-md'
+                        ? 'scale-[1.02] ring-2 ring-cyan-400 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.20)]'
+                        : 'bg-white/95 shadow-[0_8px_24px_rgba(15,23,42,0.16)]'
                     }`}
                   >
                     <div className="relative h-36">
@@ -691,8 +748,8 @@ useEffect(() => {
         onClick={centerOnUser}
         aria-label="Centra sulla mia posizione"
         className="
-          w-12 h-12
-          rounded-2xl
+          w-11 h-11
+          rounded-xl
           flex items-center justify-center
           bg-[#0B1220]/95
           backdrop-blur-xl
@@ -704,7 +761,7 @@ useEffect(() => {
           transition-all duration-300
         "
       >
-        <Navigation className="w-5 h-5 stroke-[2.3]" />
+        <Navigation className="w-[18px] h-[18px] stroke-[2.3]" />
       </button>
 
       {/* Dark mode */}
@@ -712,8 +769,8 @@ useEffect(() => {
         onClick={() => setDarkMode(!darkMode)}
         aria-label="Cambia stile della mappa"
         className={`
-          w-12 h-12
-          rounded-2xl
+          w-11 h-11
+          rounded-xl
           flex items-center justify-center
           backdrop-blur-xl
           border
@@ -741,7 +798,7 @@ useEffect(() => {
         `}
       >
         <Moon
-          className={`w-5 h-5 ${
+          className={`w-[18px] h-[18px] ${
             darkMode ? 'fill-white/20 stroke-[2.3]' : 'stroke-[2.3]'
           }`}
         />

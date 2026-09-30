@@ -1,4 +1,4 @@
-import { X, MapPin, Clock, Heart, Music, Theater, Film, Utensils, Calendar } from 'lucide-react';
+import { X, MapPin, Clock, Heart, Music, Theater, Film, Utensils, Calendar, Footprints, Car, Navigation } from 'lucide-react';
 import type { Event } from '../types/event';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useState } from 'react';
@@ -21,6 +21,7 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
     switch (event.type) {
       case 'club':
       case 'concert':
+      case 'live_music':
         return Music;
       case 'theater':
         return Theater;
@@ -67,6 +68,7 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
       case 'club':
         return 'Discoteca';
       case 'concert':
+      case 'live_music':
         return 'Concerto';
       case 'theater':
         return 'Teatro';
@@ -74,6 +76,10 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
         return 'Cinema';
       case 'restaurant':
         return 'Ristorante';
+      case 'pub':
+        return 'Pub';
+      case 'bar':
+        return 'Bar';
       default:
         return '';
     }
@@ -298,41 +304,75 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
         </div>
       </div>
       {showNavigationModal && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center">
-            <div
-              className="absolute inset-0 bg-black/50"
-              onClick={() => setShowNavigationModal(false)}
-            />
-        
-            <div className="relative bg-white rounded-xl p-6 w-72 shadow-xl">
-              <h3 className="text-lg font-semibold mb-4 text-center">
-                Come vuoi andare?
-              </h3>
-              
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => {
-                    onNavigate(event, google.maps.TravelMode.WALKING);
-                    setShowNavigationModal(false);
-                  }}
-                  className="py-2 rounded-lg bg-gray-100 hover:bg-gray-200"
-                >
-                  🚶 A piedi
-                </button>
-                
-                <button
-                  onClick={() => {
-                    onNavigate(event, google.maps.TravelMode.DRIVING);
-                    setShowNavigationModal(false);
-                  }}
-                  className="py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-                >
-                  🚗 In auto
-                </button>
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setShowNavigationModal(false)}
+          />
+
+          <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/10 bg-[#0B1220]/95 backdrop-blur-xl shadow-[0_24px_60px_rgba(0,0,0,0.45)] p-5">
+            <div className="flex items-start justify-between gap-4 mb-5">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-11 h-11 shrink-0 rounded-2xl flex items-center justify-center bg-gradient-to-br from-cyan-400 via-blue-500 to-violet-500 shadow-[0_0_16px_rgba(34,211,238,0.22)]">
+                  <Navigation className="w-5 h-5 text-white stroke-[2.4]" />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold tracking-[0.16em] uppercase text-cyan-400">
+                    Indicazioni
+                  </p>
+                  <h3 className="text-lg font-bold text-white">
+                    Come vuoi andare?
+                  </h3>
+                  <p className="text-xs text-slate-400 truncate mt-0.5">
+                    {event.venue}
+                  </p>
+                </div>
               </div>
+
+              <button
+                onClick={() => setShowNavigationModal(false)}
+                aria-label="Chiudi"
+                className="w-9 h-9 shrink-0 rounded-xl flex items-center justify-center bg-white/5 border border-white/10 text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => {
+                  onNavigate(event, google.maps.TravelMode.WALKING);
+                  setShowNavigationModal(false);
+                }}
+                className="group min-h-[112px] rounded-2xl border border-white/10 bg-[#111B2E] px-4 py-4 flex flex-col items-center justify-center gap-3 text-slate-300 hover:border-cyan-400/40 hover:bg-[#162238] hover:text-white transition-all duration-300"
+              >
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-cyan-400/10 text-cyan-400 group-hover:bg-cyan-400/15 transition-colors">
+                  <Footprints className="w-5 h-5 stroke-[2.3]" />
+                </div>
+                <span className="text-sm font-semibold">A piedi</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  onNavigate(event, google.maps.TravelMode.DRIVING);
+                  setShowNavigationModal(false);
+                }}
+                className="group min-h-[112px] rounded-2xl border border-cyan-400/30 bg-gradient-to-br from-cyan-400 via-blue-500 to-violet-500 px-4 py-4 flex flex-col items-center justify-center gap-3 text-white shadow-[0_0_18px_rgba(34,211,238,0.16)] hover:shadow-[0_0_24px_rgba(34,211,238,0.24)] hover:-translate-y-0.5 transition-all duration-300"
+              >
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-white/15">
+                  <Car className="w-5 h-5 stroke-[2.3]" />
+                </div>
+                <span className="text-sm font-semibold">In auto</span>
+              </button>
+            </div>
+
+            <p className="mt-4 text-center text-[11px] text-slate-500">
+              Scegli il mezzo per calcolare il percorso.
+            </p>
           </div>
-        )}
+        </div>
+      )}
 
     </div>
   );

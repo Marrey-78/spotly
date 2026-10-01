@@ -1,5 +1,8 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
+import { logEvent } from 'firebase/analytics';
+import { analytics } from '../../firebase';
+
 export type AnalyticsEventType =
   | 'venue_view'
   | 'organizer_view'
@@ -37,6 +40,27 @@ function getSessionId(): string {
 export async function trackAnalytics(
   payload: TrackAnalyticsPayload
 ) {
+  // =========================
+  // GOOGLE ANALYTICS 4
+  // =========================
+  try {
+    if (analytics) {
+      logEvent(analytics, payload.event_type, {
+        venue_id: payload.venue_id,
+        organizer_id: payload.organizer_id,
+        event_id: payload.event_id,
+      });
+    }
+  } catch (error) {
+    console.error(
+      'Google Analytics tracking error:',
+      error
+    );
+  }
+
+  // =========================
+  // FLODE ANALYTICS DATABASE
+  // =========================
   try {
     await fetch(`${API_URL}/analytics/track`, {
       method: 'POST',
@@ -53,7 +77,7 @@ export async function trackAnalytics(
 
   } catch (error) {
     console.error(
-      'Analytics tracking error:',
+      'Flode Analytics tracking error:',
       error
     );
   }

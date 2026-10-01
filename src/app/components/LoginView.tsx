@@ -222,61 +222,63 @@ provider: ${JSON.stringify(result.user.providerData)}`
   ============================================================
   */
 
-  const handleFacebookLogin = async () => {
+const handleFacebookLogin = async () => {
+  setError('');
+  setLoading(true);
 
-    setError('');
-    setLoading(true);
+  try {
+    const result = await signInWithPopup(
+      auth,
+      facebookProvider
+    );
 
-    try {
+    alert(
+      `FACEBOOK DEBUG
+email: ${result.user.email}
+nome: ${result.user.displayName}
+provider: ${JSON.stringify(result.user.providerData)}`
+    );
 
-      const result =
-        await signInWithPopup(
-          auth,
-          facebookProvider
-        );
+    console.error('FACEBOOK EMAIL:', result.user.email);
+    console.error(
+      'FACEBOOK PROVIDER DATA:',
+      result.user.providerData
+    );
 
-      const idToken =
-        await result.user.getIdToken();
+    const idToken = await result.user.getIdToken();
 
-      const backendResult =
-        await loginWithFirebase(
-          idToken
-        );
+    const backendResult = await loginWithFirebase(
+      idToken
+    );
 
-      localStorage.setItem(
-        'token',
-        backendResult.token
-      );
+    localStorage.setItem(
+      'token',
+      backendResult.token
+    );
 
-      localStorage.setItem(
-        'userData',
-        JSON.stringify(
-          backendResult.user
-        )
-      );
+    localStorage.setItem(
+      'userData',
+      JSON.stringify(backendResult.user)
+    );
 
-      onLogin(
-        backendResult.user
-      );
+    onLogin(backendResult.user);
 
-    } catch (error) {
+  } catch (error) {
+    console.error(
+      'Errore login Facebook:',
+      error
+    );
 
-      console.error(
-        'Errore login Facebook:',
-        error
-      );
+    setError(
+      error instanceof Error
+        ? error.message
+        : 'Accesso con Facebook non riuscito.'
+    );
 
-      setError(
-        'Accesso con Facebook non riuscito.'
-      );
-
-    } finally {
-
-      setLoading(false);
-
-    }
-  };
-
+  } finally {
+    setLoading(false);
+  }
+};
 
   /*
   ============================================================
@@ -872,9 +874,8 @@ provider: ${JSON.stringify(result.user.providerData)}`
                   </InputContainer>
 
 
-                  {/* VENUE OWNER */}
-
-                  {isRegistering && (
+                  {/* VENUE OWNER - TEMPORANEAMENTE NASCOSTO */}
+                  {false && isRegistering && (
 
                     <label
                       className="
@@ -1046,6 +1047,9 @@ provider: ${JSON.stringify(result.user.providerData)}`
               </form>
 
 
+              {/* SOCIAL LOGIN - TEMPORANEAMENTE NASCOSTO */}
+              {false && (
+                <>
               {/* =================================================
                   DIVIDER
               ================================================== */}
@@ -1183,6 +1187,10 @@ provider: ${JSON.stringify(result.user.providerData)}`
                 </button>
 
               </div>
+
+
+                </>
+              )}
 
 
               {/* FOOTER */}

@@ -18,4 +18,10 @@ export const googleProvider = new GoogleAuthProvider();
 
 export const facebookProvider = new FacebookAuthProvider();
 
+facebookProvider.addScope('email');
+
+facebookProvider.setCustomParameters({
+  display: 'popup',
+});
+
 export { signInWithPopup };

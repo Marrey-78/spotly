@@ -163,6 +163,14 @@ export function LoginView({ onLogin }: LoginViewProps) {
           googleProvider
         );
 
+        alert(
+  `FACEBOOK DEBUG
+email: ${result.user.email}
+nome: ${result.user.displayName}
+provider: ${JSON.stringify(result.user.providerData)}`
+);
+
+
       const idToken =
         await result.user.getIdToken();
 
@@ -195,7 +203,9 @@ export function LoginView({ onLogin }: LoginViewProps) {
       );
 
       setError(
-        'Accesso con Google non riuscito.'
+        error instanceof Error
+          ? error.message
+          : 'Accesso con Google non riuscito.'
       );
 
     } finally {

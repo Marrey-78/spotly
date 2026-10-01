@@ -48,9 +48,14 @@ export async function loginWithFirebase(idToken: string) {
     }),
   });
 
+  const data = await response.json();
+
   if (!response.ok) {
-    throw new Error('Autenticazione Firebase fallita');
+    console.error('ERRORE BACKEND FIREBASE:', data);
+    throw new Error(
+      data.detail || 'Autenticazione Firebase fallita'
+    );
   }
 
-  return response.json();
+  return data;
 }

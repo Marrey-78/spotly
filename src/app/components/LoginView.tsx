@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import flodeLogo from '../../assets/flode-bianco-trasparente.png';
 import {Eye,EyeOff,Lock, Mail, User, ArrowRight, MapPin, CalendarDays, Users,} from 'lucide-react';
 
@@ -6,6 +8,7 @@ import {
   loginUser,
   registerUser,
   loginWithFirebase,
+  preparePasswordReset,
 } from '../api/auth';
 
 import {
@@ -37,6 +40,9 @@ export function LoginView({ onLogin }: LoginViewProps) {
 
   const [error, setError] = useState('');
 
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState('');
+
 
   /*
   ============================================================
@@ -45,46 +51,46 @@ export function LoginView({ onLogin }: LoginViewProps) {
   */
 
   const handleLogin = async (e: React.FormEvent) => {
-
     e.preventDefault();
 
     setError('');
     setLoading(true);
 
     try {
+      // Firebase first: required after a password reset.
+      try {
+        const credential = await signInWithEmailAndPassword(
+          auth,
+          email.trim(),
+          password
+        );
 
+        const idToken = await credential.user.getIdToken();
+        const result = await loginWithFirebase(idToken);
+
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('userData', JSON.stringify(result.user));
+        onLogin(result.user);
+        return;
+      } catch (firebaseError) {
+        console.info('Provo il login legacy Flode.', firebaseError);
+      }
+
+      // Old accounts continue to work with the PostgreSQL bcrypt password.
       const result = await loginUser({
         email,
         password,
       });
 
-      localStorage.setItem(
-        'token',
-        result.token
-      );
-
-      localStorage.setItem(
-        'userData',
-        JSON.stringify(result.user)
-      );
-
+      localStorage.setItem('token', result.token);
+      localStorage.setItem('userData', JSON.stringify(result.user));
       onLogin(result.user);
 
     } catch (error) {
-
-      console.error(
-        'Errore login:',
-        error
-      );
-
-      setError(
-        'Email o password non corretti.'
-      );
-
+      console.error('Errore login:', error);
+      setError('Email o password non corretti.');
     } finally {
-
       setLoading(false);
-
     }
   };
 
@@ -146,6 +152,47 @@ export function LoginView({ onLogin }: LoginViewProps) {
 
   /*
   ============================================================
+  RECUPERO PASSWORD
+  ============================================================
+  */
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setResetSuccess('');
+
+    const normalizedEmail = email.trim();
+
+    if (!normalizedEmail) {
+      setError('Inserisci la tua email.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await sendPasswordResetEmail(auth, normalizedEmail);
+      setResetSuccess(
+        'Se esiste un account associato a questa email, riceverai un link per reimpostare la password.'
+      );
+    } catch (error: any) {
+      console.error('Errore recupero password:', error);
+
+      if (error?.code === 'auth/invalid-email') {
+        setError('Inserisci un indirizzo email valido.');
+      } else if (error?.code === 'auth/too-many-requests') {
+        setError('Troppi tentativi. Riprova tra qualche minuto.');
+      } else {
+        setError('Non è stato possibile inviare l’email di recupero. Riprova.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  /*
+  ============================================================
   GOOGLE
   ============================================================
   */
@@ -162,13 +209,6 @@ export function LoginView({ onLogin }: LoginViewProps) {
           auth,
           googleProvider
         );
-
-        alert(
-  `FACEBOOK DEBUG
-email: ${result.user.email}
-nome: ${result.user.displayName}
-provider: ${JSON.stringify(result.user.providerData)}`
-);
 
 
       const idToken =
@@ -230,19 +270,6 @@ const handleFacebookLogin = async () => {
     const result = await signInWithPopup(
       auth,
       facebookProvider
-    );
-
-    alert(
-      `FACEBOOK DEBUG
-email: ${result.user.email}
-nome: ${result.user.displayName}
-provider: ${JSON.stringify(result.user.providerData)}`
-    );
-
-    console.error('FACEBOOK EMAIL:', result.user.email);
-    console.error(
-      'FACEBOOK PROVIDER DATA:',
-      result.user.providerData
     );
 
     const idToken = await result.user.getIdToken();
@@ -609,7 +636,9 @@ provider: ${JSON.stringify(result.user.providerData)}`
                     tracking-tight
                   "
                 >
-                  {isRegistering
+                  {isResettingPassword
+                    ? 'Recupera la password'
+                    : isRegistering
                     ? 'Crea il tuo account'
                     : 'Bentornato'}
                 </h2>
@@ -622,7 +651,9 @@ provider: ${JSON.stringify(result.user.providerData)}`
                     text-sm
                   "
                 >
-                  {isRegistering
+                  {isResettingPassword
+                    ? 'Inserisci l’email associata al tuo account. Ti invieremo un link per scegliere una nuova password.'
+                    : isRegistering
                     ? 'Entra nel flusso della tua città.'
                     : 'Scopri cosa sta succedendo intorno a te.'}
                 </p>
@@ -634,6 +665,7 @@ provider: ${JSON.stringify(result.user.providerData)}`
                   LOGIN / REGISTER SWITCH
               ================================================== */}
 
+              {!isResettingPassword && (
               <div
                 className="
                   grid
@@ -707,6 +739,7 @@ provider: ${JSON.stringify(result.user.providerData)}`
                 </button>
 
               </div>
+              )}
 
 
               {/* =================================================
@@ -715,7 +748,9 @@ provider: ${JSON.stringify(result.user.providerData)}`
 
               <form
                 onSubmit={
-                  isRegistering
+                  isResettingPassword
+                    ? handlePasswordReset
+                    : isRegistering
                     ? handleRegister
                     : handleLogin
                 }
@@ -729,7 +764,7 @@ provider: ${JSON.stringify(result.user.providerData)}`
 
                   {/* NAME */}
 
-                  {isRegistering && (
+                  {isRegistering && !isResettingPassword && (
 
                     <InputContainer>
 
@@ -801,6 +836,8 @@ provider: ${JSON.stringify(result.user.providerData)}`
                   </InputContainer>
 
 
+                  {!isResettingPassword && (
+                    <>
                   {/* PASSWORD */}
 
                   <InputContainer>
@@ -874,6 +911,9 @@ provider: ${JSON.stringify(result.user.providerData)}`
                   </InputContainer>
 
 
+                    </>
+                  )}
+
                   {/* VENUE OWNER - TEMPORANEAMENTE NASCOSTO */}
                   {false && isRegistering && (
 
@@ -934,7 +974,7 @@ provider: ${JSON.stringify(result.user.providerData)}`
 
                 {/* FORGOT PASSWORD */}
 
-                {!isRegistering && (
+                {!isRegistering && !isResettingPassword && (
 
                   <div
                     className="
@@ -946,10 +986,15 @@ provider: ${JSON.stringify(result.user.providerData)}`
 
                     <button
                       type="button"
+                      onClick={() => {
+                        setIsResettingPassword(true);
+                        setError('');
+                        setResetSuccess('');
+                      }}
                       className="
                         text-xs
-                        text-white/45
-                        hover:text-cyan-300
+                        text-cyan-600
+                        hover:text-cyan-400
                         transition-colors
                       "
                     >
@@ -958,6 +1003,27 @@ provider: ${JSON.stringify(result.user.providerData)}`
 
                   </div>
 
+                )}
+
+
+                {/* RESET SUCCESS */}
+
+                {resetSuccess && (
+                  <div
+                    className="
+                      mt-4
+                      px-4
+                      py-3
+                      rounded-xl
+                      bg-emerald-500/10
+                      border
+                      border-emerald-500/20
+                      text-emerald-300
+                      text-sm
+                    "
+                  >
+                    {resetSuccess}
+                  </div>
                 )}
 
 
@@ -1044,12 +1110,33 @@ provider: ${JSON.stringify(result.user.providerData)}`
 
                 </button>
 
+                {isResettingPassword && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsResettingPassword(false);
+                      setError('');
+                      setResetSuccess('');
+                    }}
+                    className="
+                      w-full
+                      mt-4
+                      text-sm
+                      text-white/50
+                      hover:text-cyan-300
+                      transition-colors
+                    "
+                  >
+                    Torna all’accesso
+                  </button>
+                )}
+
               </form>
 
 
-              {/* SOCIAL LOGIN - TEMPORANEAMENTE NASCOSTO */}
-              {false && (
+              {!isResettingPassword && (
                 <>
+              {/* SOCIAL LOGIN */}
               {/* =================================================
                   DIVIDER
               ================================================== */}
@@ -1098,7 +1185,7 @@ provider: ${JSON.stringify(result.user.providerData)}`
               <div
                 className="
                   grid
-                  grid-cols-2
+                  grid-cols-1
                   gap-3
                 "
               >
@@ -1145,9 +1232,9 @@ provider: ${JSON.stringify(result.user.providerData)}`
                 </button>
 
 
-                {/* FACEBOOK */}
-
-                <button
+                {/* FACEBOOK - TEMPORANEAMENTE NASCOSTO */}
+                {false && (
+<button
                   type="button"
                   onClick={
                     handleFacebookLogin
@@ -1185,13 +1272,14 @@ provider: ${JSON.stringify(result.user.providerData)}`
                   Facebook
 
                 </button>
+                )}
+
+
 
               </div>
 
-
                 </>
               )}
-
 
               {/* FOOTER */}
 

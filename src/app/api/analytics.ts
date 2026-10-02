@@ -23,18 +23,41 @@ interface TrackAnalyticsPayload {
   event_id?: string;
 }
 
-function getSessionId(): string {
-  let sessionId = localStorage.getItem('flode_session_id');
-
-  if (!sessionId) {
-    sessionId = crypto.randomUUID();
-    localStorage.setItem(
-      'flode_session_id',
-      sessionId
-    );
+function generateSessionId(): string {
+  try {
+    if (
+      typeof crypto !== 'undefined' &&
+      typeof crypto.randomUUID === 'function'
+    ) {
+      return crypto.randomUUID();
+    }
+  } catch (error) {
+    console.warn('crypto.randomUUID non disponibile:', error);
   }
 
-  return sessionId;
+  // Fallback compatibile con Safari/iOS meno recenti
+  return (
+    Date.now().toString(36) +
+    '-' +
+    Math.random().toString(36).substring(2, 15)
+  );
+}
+
+function getSessionId(): string {
+  try {
+    let sessionId = localStorage.getItem('flode_session_id');
+
+    if (!sessionId) {
+      sessionId = generateSessionId();
+      localStorage.setItem('flode_session_id', sessionId);
+    }
+
+    return sessionId;
+  } catch (error) {
+    // Anche localStorage può essere indisponibile in alcuni contesti Safari
+    console.warn('localStorage non disponibile:', error);
+    return generateSessionId();
+  }
 }
 
 export async function trackAnalytics(

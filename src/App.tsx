@@ -361,16 +361,16 @@ export default function App() {
 
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      {/* Date Selector - only for home */}
+    <div className="h-[100dvh] flex flex-col overflow-hidden bg-gray-50">
+      {/* Date Selector - fixed independently from the map */}
       {activeSection === 'home' && (
         <DateSelector selectedDate={selectedDate} onDateChange={setSelectedDate} />
       )}
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden">
         {activeSection === 'home' && (
-          <div className="relative h-full">
+          <div className="fixed left-0 right-0 top-[140px] bottom-0 overflow-hidden">
             {/* Da scommentare per il filtro sulla città 
             <div className="absolute top-4 left-4 right-4 z-40 flex gap-2">
               <button

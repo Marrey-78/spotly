@@ -152,6 +152,7 @@ export function MapView({ events, onEventClick, navigationEvent, travelMode, onC
 
   const { position } = useUserLocation();
   const mapRef = useRef<google.maps.Map | null>(null);
+  const hasInitialUserFocusRef = useRef(false);
   const cardsRef = useRef<Record<string, HTMLButtonElement | null>>({});
 
   const setCardRef = (id: string) => (el: HTMLButtonElement | null) => {
@@ -411,12 +412,27 @@ useEffect(() => {
     onEventClick(event); // apre modal
   };
 
-  const centerOnUser = () => {
+  const focusOnUser = useCallback(() => {
     if (!position || !mapRef.current) return;
 
+    mapRef.current.setZoom(14);
     mapRef.current.panTo(position);
-    mapRef.current.setZoom(15);
+
+    // Sposta il centro visivo: il marker utente resta sopra le card.
+    mapRef.current.panBy(0, 140);
+  }, [position]);
+
+  const centerOnUser = () => {
+    focusOnUser();
   };
+
+  useEffect(() => {
+    if (!position || !mapRef.current || hasInitialUserFocusRef.current) return;
+
+    focusOnUser();
+    hasInitialUserFocusRef.current = true;
+  }, [position, focusOnUser]);
+
 
 
   if (!isLoaded) {
@@ -531,6 +547,7 @@ useEffect(() => {
         options={{
           disableDefaultUI: true,
           clickableIcons: false,
+          gestureHandling: 'greedy',
           styles: darkMode ? darkMapStyle : undefined,
         }}
       >
@@ -675,7 +692,7 @@ useEffect(() => {
 
       {/* 🎴 CARDS */}
       {!isNavigating && (
-        <div className="absolute bottom-[88px] left-0 right-0 z-20 pointer-events-none">
+        <div className="absolute bottom-[72px] left-0 right-0 z-20 pointer-events-none">
           <div className="px-4">
             <div className="flex gap-4 overflow-x-auto pt-3 pb-2 pointer-events-auto scrollbar-hide">
               {events.map((event) => {

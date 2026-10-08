@@ -122,7 +122,7 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -304,7 +304,7 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
         </div>
       </div>
       {showNavigationModal && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0">
+        <div className="fixed inset-0 z-[210] flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setShowNavigationModal(false)}

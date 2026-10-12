@@ -33,6 +33,7 @@ export default function App() {
 
   // Benvenuto più login
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const [userData, setUserData] = useState<UserData | null>(null);
   
   
@@ -189,17 +190,25 @@ export default function App() {
   }, [userData]);
 
 
+  // Gli eventi pubblici sono disponibili anche agli ospiti.
   useEffect(() => {
-    if (isLoggedIn) {
-      loadEventsByFilter();
-      loadFavoriteEvents();
-      loadVenueFavorites();
-      loadOrganizerFavorites();
-      loadMyProfile();
-    }
-  }, [isLoggedIn, selectedCity]);
+    loadEventsByFilter();
+  }, [selectedCity]);
+
+  // I dati personali vengono caricati solo dopo il login.
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    loadFavoriteEvents();
+    loadVenueFavorites();
+    loadOrganizerFavorites();
+    loadMyProfile();
+  }, [isLoggedIn]);
 
   const toggleFavorite = async (eventId: string) => {
+    if (!isLoggedIn) {
+      setShowLogin(true);
+      return;
+    }
     try {
       const isFavorite = favorites.has(eventId);
     
@@ -238,22 +247,33 @@ export default function App() {
   const handleLogin = (user: UserData) => {
     setUserData(user);
     setIsLoggedIn(true);
+    setShowLogin(false);
     localStorage.setItem('userData', JSON.stringify(user));
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUserData(null);
+    setShowLogin(false);
+    setFavorites(new Set());
+    setVenueFavorites(new Set());
+    setOrganizerFavorites(new Set());
+    setFavoriteVenues([]);
+    setFavoriteOrganizers([]);
     localStorage.removeItem('userData');
     localStorage.removeItem('token');
     setActiveSection('home');
     
   };
 
-    // Show login view if not logged in
-  if (!isLoggedIn) {
-    return <LoginView onLogin={handleLogin} />;
-  }
+
+  const handleSectionChange = (section: NavSection) => {
+    if (section === 'profile' && !isLoggedIn) {
+      setShowLogin(true);
+      return;
+    }
+    setActiveSection(section);
+  };
 
   const handleUpdateProfile = (data: { name: string; email: string }) => {
     if (userData) {
@@ -489,10 +509,25 @@ export default function App() {
       {/* Bottom Navigation */}
       <BottomNav
         activeSection={activeSection}
-        onSectionChange={setActiveSection}
+        onSectionChange={handleSectionChange}
         isVenueOwner={userData?.role === 'venue_owner'}
         isAdmin={userData?.role === 'admin'}
       />
+
+      {/* Login richiamabile dagli ospiti, senza bloccare la navigazione pubblica. */}
+      {showLogin && !isLoggedIn && (
+        <div className="fixed inset-0 z-[200] bg-white overflow-y-auto">
+          <LoginView onLogin={handleLogin} />
+          <button
+            type="button"
+            onClick={() => setShowLogin(false)}
+            className="bg-indigo-600 text-white font-semibold px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors"
+            aria-label="Chiudi accesso e torna agli eventi"
+          >
+            ✕ Chiudi
+          </button>
+        </div>
+      )}
 
       {/* Event Detail Modal */}
       {selectedEvent && (

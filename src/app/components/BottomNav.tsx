@@ -1,6 +1,7 @@
-import { Map, List, User, Store, Shield } from 'lucide-react';
+import { Map, List, User, Store, Shield, Users } from 'lucide-react';
 
 export type NavSection =
+  | 'community'
   | 'home'
   | 'events'
   | 'venues'
@@ -22,6 +23,12 @@ export function BottomNav({
 }: BottomNavProps) {
   const navItems = [
     {
+      id: 'community' as NavSection,
+      label: 'Community',
+      icon: Users,
+      show: true,
+    },
+    {
       id: 'events' as NavSection,
       label: 'Eventi',
       icon: List,
@@ -29,8 +36,14 @@ export function BottomNav({
     },
     {
       id: 'home' as NavSection,
-      label: 'Home',
+      label: 'Mappa',
       icon: Map,
+      show: true,
+    },
+    {
+      id: 'profile' as NavSection,
+      label: 'Profilo',
+      icon: User,
       show: true,
     },
     {
@@ -44,12 +57,6 @@ export function BottomNav({
       label: 'Admin',
       icon: Shield,
       show: isAdmin,
-    },
-    {
-      id: 'profile' as NavSection,
-      label: 'Profilo',
-      icon: User,
-      show: true,
     },
   ];
 

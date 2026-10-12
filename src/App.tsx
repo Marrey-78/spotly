@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { CommunityView } from './app/components/CommunityView';
 import { DateSelector } from './app/components/DateSelector';
 import { BottomNav, type NavSection } from './app/components/BottomNav';
 import { MapView } from './app/components/MapView';
@@ -389,6 +390,9 @@ export default function App() {
 
       {/* Main Content */}
       <div className="flex-1 min-h-0 overflow-hidden">
+        {activeSection === 'community' && (
+          <CommunityView />
+        )}
         {activeSection === 'home' && (
           <div className="fixed left-0 right-0 top-[140px] bottom-0 overflow-hidden">
             {/* Da scommentare per il filtro sulla città 
@@ -521,7 +525,7 @@ export default function App() {
           <button
             type="button"
             onClick={() => setShowLogin(false)}
-            className="bg-indigo-600 text-white font-semibold px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors"
+            className="fixed top-4 right-4 z-[300] rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-lg"
             aria-label="Chiudi accesso e torna agli eventi"
           >
             ✕ Chiudi

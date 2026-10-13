@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { ArrowLeft, MessageCircle, Send, RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Send, RefreshCw, AlertCircle, Loader2, Flag, MoreVertical, X } from 'lucide-react';
 import type { Event } from '../types/event';
 
 type ChatMessage = {
@@ -49,14 +49,27 @@ export function EventChat({ event, isLoggedIn, currentUserId, onClose, onLoginRe
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [retrySeconds, setRetrySeconds] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [notFound, setNotFound] = useState(false);
+  const [reportTarget, setReportTarget] = useState<ChatMessage | null>(null);
+  const [reportReason, setReportReason] = useState('Spam o pubblicità indesiderata');
+  const [reportSending, setReportSending] = useState(false);
+  const [reportError, setReportError] = useState('');
+  const [reportSuccess, setReportSuccess] = useState('');
+  const [menuMessageId, setMenuMessageId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const shouldStickRef = useRef(true);
   const busyRef = useRef(false);
   const initialLoadRef = useRef(true);
   const notFoundRef = useRef(false);
+
+  useEffect(() => {
+    if (retrySeconds <= 0) return;
+    const timer = window.setTimeout(() => setRetrySeconds((current) => Math.max(0, current - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [retrySeconds]);
 
   const loadMessages = useCallback(async (signal?: AbortSignal) => {
     if (!API_BASE) {
@@ -96,6 +109,10 @@ export function EventChat({ event, isLoggedIn, currentUserId, onClose, onLoginRe
     const controller = new AbortController();
     setMessages([]);
     setDraft('');
+    setRetrySeconds(0);
+    setReportTarget(null);
+    setMenuMessageId(null);
+    setReportSuccess('');
     setError('');
     setNotFound(false);
     notFoundRef.current = false;
@@ -127,7 +144,7 @@ export function EventChat({ event, isLoggedIn, currentUserId, onClose, onLoginRe
   const sendMessage = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const content = draft.trim();
-    if (!content || sending || notFound) return;
+    if (!content || sending || notFound || retrySeconds > 0) return;
     if (!isLoggedIn) { onLoginRequired(); return; }
     const token = localStorage.getItem('token');
     if (!token) { onLoginRequired(); return; }
@@ -141,6 +158,18 @@ export function EventChat({ event, isLoggedIn, currentUserId, onClose, onLoginRe
         body: JSON.stringify({ content }),
       });
       if (response.status === 401) throw new Error('Sessione scaduta: effettua nuovamente l’accesso.');
+      if (response.status === 429) {
+        const payload = await response.json().catch(() => ({}));
+        const headerSeconds = Number(response.headers.get('Retry-After'));
+        const detail = typeof payload.detail === 'string' ? payload.detail : '';
+        const match = detail.match(/(\d+)\s*second/i);
+        const seconds = Number.isFinite(headerSeconds) && headerSeconds > 0
+          ? Math.ceil(headerSeconds)
+          : match ? Number(match[1]) : 30;
+        setRetrySeconds(Math.max(1, seconds));
+        setError('');
+        return;
+      }
       if (!response.ok) throw new Error(`Invio non riuscito (${response.status}).`);
       setDraft('');
       shouldStickRef.current = true;
@@ -149,6 +178,39 @@ export function EventChat({ event, isLoggedIn, currentUserId, onClose, onLoginRe
       setError(err instanceof Error ? err.message : 'Errore durante l’invio.');
     } finally {
       setSending(false);
+    }
+  };
+
+  const submitReport = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!reportTarget || reportSending) return;
+    const token = localStorage.getItem('token');
+    if (!isLoggedIn || !token) {
+      setReportError('Accedi a Flode per segnalare un messaggio.');
+      return;
+    }
+    if (!API_BASE) {
+      setReportError('API Community non configurata.');
+      return;
+    }
+    setReportSending(true);
+    setReportError('');
+    try {
+      const response = await fetch(`${API_BASE}/community/messages/${encodeURIComponent(reportTarget.id)}/report`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: reportReason }),
+      });
+      if (response.status === 409) throw new Error('Hai già segnalato questo messaggio.');
+      if (response.status === 401) throw new Error('Sessione scaduta. Accedi nuovamente.');
+      if (response.status === 400) throw new Error('Non puoi segnalare un tuo messaggio.');
+      if (!response.ok) throw new Error(`Segnalazione non riuscita (${response.status}).`);
+      setReportTarget(null);
+      setReportSuccess('Segnalazione inviata. Grazie per averci aiutato a mantenere sicura la Community.');
+    } catch (err) {
+      setReportError(err instanceof Error ? err.message : 'Errore durante la segnalazione.');
+    } finally {
+      setReportSending(false);
     }
   };
 
@@ -197,12 +259,24 @@ export function EventChat({ event, isLoggedIn, currentUserId, onClose, onLoginRe
                     <p className="whitespace-pre-wrap break-words text-[14px] leading-[1.45]">{message.content}</p>
                     <p className={`mt-1.5 text-right text-[10px] ${mine ? 'text-cyan-100/75' : 'text-slate-400'}`}>{validTime ? timeFormatter.format(timestamp) : ''}</p>
                   </div>
+                  {!mine && isLoggedIn && (
+                    <div className="relative self-center">
+                      <button type="button" aria-label={`Opzioni messaggio di ${name}`} aria-expanded={menuMessageId === message.id} onClick={() => setMenuMessageId(menuMessageId === message.id ? null : message.id)} className="rounded-full p-1.5 text-slate-400 hover:bg-white/10 hover:text-white"><MoreVertical className="h-4 w-4" /></button>
+                      {menuMessageId === message.id && (
+                        <div className="absolute left-0 top-full z-20 mt-1 w-36 rounded-xl border border-white/10 bg-[#24334B] p-1 shadow-xl">
+                          <button type="button" onClick={() => { setReportTarget(message); setReportReason('Spam o pubblicità indesiderata'); setReportError(''); setReportSuccess(''); setMenuMessageId(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-white hover:bg-white/10"><Flag className="h-4 w-4 text-cyan-300" /> Segnala</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
 
+        {reportSuccess && <div role="status" className="border-t border-cyan-400/20 bg-cyan-400/10 px-4 py-2.5 text-xs text-cyan-100">{reportSuccess}</div>}
+        {retrySeconds > 0 && <div role="status" className="flex items-start gap-2 border-t border-amber-400/20 bg-amber-400/10 px-4 py-2.5 text-xs text-amber-100"><AlertCircle className="h-4 w-4 shrink-0" /><span>Hai inviato troppi messaggi. Potrai inviarne un altro tra <strong>{retrySeconds} secondi</strong>. Il tuo testo rimane salvato.</span></div>}
         {error && <div role="alert" className="flex items-start gap-2 border-t border-red-400/20 bg-red-500/10 px-4 py-2.5 text-xs text-red-200"><AlertCircle className="h-4 w-4 shrink-0" /><span>{error}</span></div>}
         <form onSubmit={sendMessage} className="flex shrink-0 items-end gap-2 border-t border-white/10 bg-[#111E34] px-3 py-3 pb-[max(12px,env(safe-area-inset-bottom))] sm:px-4">
           {!isLoggedIn ? (
@@ -210,10 +284,31 @@ export function EventChat({ event, isLoggedIn, currentUserId, onClose, onLoginRe
           ) : (
             <>
               <input value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={2000} disabled={notFound} placeholder="Scrivi un messaggio…" aria-label="Messaggio" className="min-w-0 flex-1 rounded-2xl border border-white/10 bg-[#24334B] px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-slate-400 focus:border-cyan-400 disabled:opacity-50" />
-              <button type="submit" disabled={!draft.trim() || sending || notFound} aria-label="Invia messaggio" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 text-slate-950 shadow-lg shadow-cyan-500/15 transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100">{sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}</button>
+              <button type="submit" disabled={!draft.trim() || sending || notFound || retrySeconds > 0} aria-label={retrySeconds > 0 ? `Attendi ${retrySeconds} secondi` : 'Invia messaggio'} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 text-slate-950 shadow-lg shadow-cyan-500/15 transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100">{sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}</button>
             </>
           )}
         </form>
+        {reportTarget && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/80 px-4" role="dialog" aria-modal="true" aria-label="Segnala messaggio">
+            <form onSubmit={submitReport} className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#172438] p-5 shadow-2xl">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-lg font-bold"><Flag className="h-5 w-5 text-cyan-300" /> Segnala messaggio</h2>
+                <button type="button" onClick={() => setReportTarget(null)} disabled={reportSending} aria-label="Chiudi segnalazione" className="rounded-full p-2 text-slate-300 hover:bg-white/10"><X className="h-5 w-5" /></button>
+              </div>
+              <p className="mb-3 text-sm text-slate-300">Seleziona il motivo della segnalazione. Il messaggio verrà esaminato, non eliminato automaticamente.</p>
+              <p className="mb-4 line-clamp-3 rounded-xl bg-white/5 p-3 text-xs text-slate-300">{reportTarget.content}</p>
+              <div className="space-y-2">
+                {['Spam o pubblicità indesiderata', 'Molestie o insulti', 'Contenuto offensivo', 'Altro motivo'].map((reason) => (
+                  <label key={reason} className="flex cursor-pointer items-center gap-3 rounded-xl border border-white/10 px-3 py-2.5 text-sm">
+                    <input type="radio" name="reportReason" checked={reportReason === reason} onChange={() => setReportReason(reason)} className="accent-cyan-400" />{reason}
+                  </label>
+                ))}
+              </div>
+              {reportError && <p role="alert" className="mt-3 text-sm text-red-300">{reportError}</p>}
+              <button type="submit" disabled={reportSending} className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-3 font-bold text-slate-950 disabled:opacity-50">{reportSending && <Loader2 className="h-4 w-4 animate-spin" />}{reportSending ? 'Invio…' : 'Invia segnalazione'}</button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );

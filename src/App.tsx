@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { CommunityView } from './app/components/CommunityView';
+import { CommunityView, type CommunityChatSummary } from './app/components/CommunityView';
+import { EventChat } from './app/components/EventChat';
 import { DateSelector } from './app/components/DateSelector';
 import { BottomNav, type NavSection } from './app/components/BottomNav';
 import { MapView } from './app/components/MapView';
@@ -58,6 +59,7 @@ export default function App() {
     //Pop up
   const [travelMode, setTravelMode] = useState<google.maps.TravelMode | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [chatEvent, setChatEvent] = useState<Event | null>(null);
 
   //Preferiti 
   const [favoriteVenues, setFavoriteVenues] = useState<any[]>([]);
@@ -256,6 +258,7 @@ export default function App() {
     setIsLoggedIn(false);
     setUserData(null);
     setShowLogin(false);
+    setChatEvent(null);
     setFavorites(new Set());
     setVenueFavorites(new Set());
     setOrganizerFavorites(new Set());
@@ -268,13 +271,41 @@ export default function App() {
   };
 
 
-  const handleSectionChange = (section: NavSection) => {
-    if (section === 'profile' && !isLoggedIn) {
-      setShowLogin(true);
-      return;
-    }
-    setActiveSection(section);
+const openCommunityChat = (chat: CommunityChatSummary) => {
+  const existingEvent = events.find(
+    (event) => String(event.id) === String(chat.event_id)
+  );
+
+  if (existingEvent) {
+    setSelectedEvent(null);
+    setChatEvent(existingEvent);
+    return;
+  }
+
+    const eventForChat = {
+      id: chat.event_id,
+      title: chat.event_title,
+      date: chat.event_date?.slice(0, 10) ?? '',
+      time: '',
+      description: '',
+      venue: '',
+      latitude: 0,
+      longitude: 0,
+      type: 'event',
+      price: '',
+      image: '',
+    } as unknown as Event;
+  
+    setSelectedEvent(null);
+    setChatEvent(eventForChat);
   };
+    const handleSectionChange = (section: NavSection) => {
+      if (section === 'profile' && !isLoggedIn) {
+        setShowLogin(true);
+        return;
+      }
+      setActiveSection(section);
+    };
 
   const handleUpdateProfile = (data: { name: string; email: string }) => {
     if (userData) {
@@ -391,7 +422,11 @@ export default function App() {
       {/* Main Content */}
       <div className="flex-1 min-h-0 overflow-hidden">
         {activeSection === 'community' && (
-          <CommunityView />
+          <CommunityView
+            isLoggedIn={isLoggedIn}
+            onLoginRequired={() => setShowLogin(true)}
+            onOpenChat={openCommunityChat}
+          />
         )}
         {activeSection === 'home' && (
           <div className="fixed left-0 right-0 top-[140px] bottom-0 overflow-hidden">
@@ -533,6 +568,21 @@ export default function App() {
         </div>
       )}
 
+      {/* Chat evento: sopra la scheda dettagli */}
+      {chatEvent && (
+        <EventChat
+          event={chatEvent}
+          isLoggedIn={isLoggedIn}
+          currentUserId={userData?.id}
+          onClose={() => setChatEvent(null)}
+          onLoginRequired={() => {
+            setChatEvent(null);
+            setSelectedEvent(null);
+            setShowLogin(true);
+          }}
+        />
+      )}
+
       {/* Event Detail Modal */}
       {selectedEvent && (
         <EventDetailModal
@@ -541,6 +591,7 @@ export default function App() {
           onClose={handleCloseModal}
           onToggleFavorite={toggleFavorite}
           onNavigate={handleNavigate}
+          onOpenCommunity={(event) => setChatEvent(event)}
         />
       )}
 {/* Da scommentare per il filtro sulla città

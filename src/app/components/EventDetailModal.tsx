@@ -1,4 +1,4 @@
-import { X, MapPin, Clock, Heart, Music, Theater, Film, Utensils, Calendar, Footprints, Car, Navigation } from 'lucide-react';
+import { X, MapPin, Clock, Heart, Music, Theater, Film, Utensils, Calendar, Footprints, Car, Navigation, MessageCircle } from 'lucide-react';
 import type { Event } from '../types/event';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useState } from 'react';
@@ -12,9 +12,10 @@ interface EventDetailModalProps {
   onClose: () => void;
   onToggleFavorite: (eventId: string) => void;
   onNavigate: (event: Event, mode: google.maps.TravelMode) => void;
+  onOpenCommunity?: (event: Event) => void;
 }
 
-export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite, onNavigate }: EventDetailModalProps) {
+export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite, onNavigate, onOpenCommunity }: EventDetailModalProps) {
   if (!event) return null;
 
   const getEventIcon = () => {
@@ -285,6 +286,18 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
             >
               🎟️ Acquista biglietti
             </a>
+          )}
+
+          {/* Community: la chat viene aperta dal componente padre. */}
+          {onOpenCommunity && (
+            <button
+              type="button"
+              onClick={() => onOpenCommunity(event)}
+              className="w-full mb-3 py-3 px-4 rounded-xl text-white font-semibold flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-400 via-blue-500 to-violet-500 shadow-[0_6px_20px_rgba(59,130,246,0.25)] hover:shadow-[0_8px_26px_rgba(59,130,246,0.35)] transition-all"
+            >
+              <MessageCircle className="w-5 h-5" />
+              Entra nella chat
+            </button>
           )}
 
           {/* Actions */}

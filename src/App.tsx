@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { EventChat } from './app/components/EventChat';
 import { DateSelector } from './app/components/DateSelector';
 import { BottomNav, type NavSection } from './app/components/BottomNav';
 import { MapView } from './app/components/MapView';
@@ -58,7 +57,6 @@ export default function App() {
     //Pop up
   const [travelMode, setTravelMode] = useState<google.maps.TravelMode | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [chatEvent, setChatEvent] = useState<Event | null>(null);
 
   //Preferiti 
   const [favoriteVenues, setFavoriteVenues] = useState<any[]>([]);
@@ -208,6 +206,7 @@ export default function App() {
 
   const toggleFavorite = async (eventId: string) => {
     if (!isLoggedIn) {
+      setSelectedEvent(null);
       setShowLogin(true);
       return;
     }
@@ -257,7 +256,6 @@ export default function App() {
     setIsLoggedIn(false);
     setUserData(null);
     setShowLogin(false);
-    setChatEvent(null);
     setFavorites(new Set());
     setVenueFavorites(new Set());
     setOrganizerFavorites(new Set());
@@ -527,26 +525,12 @@ export default function App() {
         </div>
       )}
 
-      {/* Chat evento: sopra la scheda dettagli */}
-      {chatEvent && (
-        <EventChat
-          event={chatEvent}
-          isLoggedIn={isLoggedIn}
-          currentUserId={userData?.id}
-          onClose={() => setChatEvent(null)}
-          onLoginRequired={() => {
-            setChatEvent(null);
-            setSelectedEvent(null);
-            setShowLogin(true);
-          }}
-        />
-      )}
-
       {/* Event Detail Modal */}
       {selectedEvent && (
         <EventDetailModal
           event={selectedEvent}
           isFavorite={favorites.has(selectedEvent.id)}
+          isLoggedIn={isLoggedIn}
           onClose={handleCloseModal}
           onToggleFavorite={toggleFavorite}
           onNavigate={handleNavigate}

@@ -9,12 +9,13 @@ import { flodeTheme } from '../theme/flodeTheme';
 interface EventDetailModalProps {
   event: Event | null;
   isFavorite: boolean;
+  isLoggedIn: boolean;
   onClose: () => void;
   onToggleFavorite: (eventId: string) => void;
   onNavigate: (event: Event, mode: google.maps.TravelMode) => void;
 }
 
-export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite, onNavigate }: EventDetailModalProps) {
+export function EventDetailModal({ event, isFavorite, isLoggedIn, onClose, onToggleFavorite, onNavigate }: EventDetailModalProps) {
   if (!event) return null;
 
   const getEventIcon = () => {
@@ -110,6 +111,12 @@ export function EventDetailModal({ event, isFavorite, onClose, onToggleFavorite,
   const [showNavigationModal, setShowNavigationModal] = useState(false);
 
   const handleToggleFavorite = () => {
+    if (!isLoggedIn) {
+      onClose();
+      onToggleFavorite(event.id);
+      return;
+    }
+
     // Tracciamo solo l'aggiunta, non la rimozione
     if (!isFavorite) {
       trackAnalytics({

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import flodeLogo from '../../assets/flode-bianco-trasparente.png';
-import {Eye,EyeOff,Lock, Mail, User, ArrowRight, MapPin, CalendarDays, Users,} from 'lucide-react';
+import {Eye,EyeOff,Lock, Mail, User, ArrowRight, MapPin, CalendarDays, Users, X,} from 'lucide-react';
 
 import {
   loginUser,
@@ -21,10 +21,11 @@ import {
 
 interface LoginViewProps {
   onLogin: (user: any) => void;
+  onClose?: () => void;
 }
 
 
-export function LoginView({ onLogin }: LoginViewProps) {
+export function LoginView({ onLogin, onClose }: LoginViewProps) {
 
   const [isRegistering, setIsRegistering] = useState(false);
 
@@ -324,6 +325,18 @@ const handleFacebookLogin = async () => {
         overflow-x-hidden
       "
     >
+
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Chiudi accesso e torna alla mappa"
+          title="Chiudi"
+          className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-[#0B1220]/90 text-white/80 shadow-lg backdrop-blur-md transition-colors hover:bg-white/15 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
+        >
+          <X size={22} strokeWidth={2} />
+        </button>
+      )}
 
       {/* =====================================================
           BACKGROUND GLOW

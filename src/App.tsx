@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { EventChat } from './app/components/EventChat';
 import { DateSelector } from './app/components/DateSelector';
 import { BottomNav, type NavSection } from './app/components/BottomNav';
 import { MapView } from './app/components/MapView';
@@ -57,6 +58,7 @@ export default function App() {
     //Pop up
   const [travelMode, setTravelMode] = useState<google.maps.TravelMode | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [chatEvent, setChatEvent] = useState<Event | null>(null);
 
   //Preferiti 
   const [favoriteVenues, setFavoriteVenues] = useState<any[]>([]);
@@ -255,6 +257,7 @@ export default function App() {
     setIsLoggedIn(false);
     setUserData(null);
     setShowLogin(false);
+    setChatEvent(null);
     setFavorites(new Set());
     setVenueFavorites(new Set());
     setOrganizerFavorites(new Set());
@@ -267,13 +270,13 @@ export default function App() {
   };
 
 
-  const handleSectionChange = (section: NavSection) => {
-    if (section === 'profile' && !isLoggedIn) {
-      setShowLogin(true);
-      return;
-    }
-    setActiveSection(section);
-  };
+    const handleSectionChange = (section: NavSection) => {
+      if (section === 'profile' && !isLoggedIn) {
+        setShowLogin(true);
+        return;
+      }
+      setActiveSection(section);
+    };
 
   const handleUpdateProfile = (data: { name: string; email: string }) => {
     if (userData) {
@@ -517,16 +520,26 @@ export default function App() {
       {/* Login richiamabile dagli ospiti, senza bloccare la navigazione pubblica. */}
       {showLogin && !isLoggedIn && (
         <div className="fixed inset-0 z-[200] bg-white overflow-y-auto">
-          <LoginView onLogin={handleLogin} />
-          <button
-            type="button"
-            onClick={() => setShowLogin(false)}
-            className="bg-indigo-600 text-white font-semibold px-4 py-2 rounded-xl hover:bg-indigo-700 transition-colors"
-            aria-label="Chiudi accesso e torna agli eventi"
-          >
-            ✕ Chiudi
-          </button>
+          <LoginView
+            onLogin={handleLogin}
+            onClose={() => setShowLogin(false)}
+          />
         </div>
+      )}
+
+      {/* Chat evento: sopra la scheda dettagli */}
+      {chatEvent && (
+        <EventChat
+          event={chatEvent}
+          isLoggedIn={isLoggedIn}
+          currentUserId={userData?.id}
+          onClose={() => setChatEvent(null)}
+          onLoginRequired={() => {
+            setChatEvent(null);
+            setSelectedEvent(null);
+            setShowLogin(true);
+          }}
+        />
       )}
 
       {/* Event Detail Modal */}

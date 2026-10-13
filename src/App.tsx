@@ -556,15 +556,10 @@ const openCommunityChat = (chat: CommunityChatSummary) => {
       {/* Login richiamabile dagli ospiti, senza bloccare la navigazione pubblica. */}
       {showLogin && !isLoggedIn && (
         <div className="fixed inset-0 z-[200] bg-white overflow-y-auto">
-          <LoginView onLogin={handleLogin} />
-          <button
-            type="button"
-            onClick={() => setShowLogin(false)}
-            className="fixed top-4 right-4 z-[300] rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-lg"
-            aria-label="Chiudi accesso e torna agli eventi"
-          >
-            ✕ Chiudi
-          </button>
+          <LoginView
+            onLogin={handleLogin}
+            onClose={() => setShowLogin(false)}
+          />
         </div>
       )}
 

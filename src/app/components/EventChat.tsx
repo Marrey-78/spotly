@@ -20,7 +20,7 @@ type Props = {
 };
 
 // Solo URL esplicito: nessun fallback alla produzione.
-const API_BASE = (import.meta.env.VITE_COMMUNITY_API_URL as string | undefined)?.replace(/\/$/, '');
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '');
 const timeFormatter = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-digit' });
 const dateFormatter = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -73,7 +73,7 @@ export function EventChat({ event, isLoggedIn, currentUserId, onClose, onLoginRe
 
   const loadMessages = useCallback(async (signal?: AbortSignal) => {
     if (!API_BASE) {
-      setError('Configura VITE_COMMUNITY_API_URL nel file .env.local.');
+      setError('Configura VITE_API_URL nel file .env.local.');
       setLoading(false);
       return;
     }

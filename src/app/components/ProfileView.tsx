@@ -1,5 +1,6 @@
-import { Heart, User, Settings, LogOut, Calendar, MapPin, Star, Trophy, Edit2 } from 'lucide-react';
+import { Heart, User, Settings, LogOut, Calendar, MapPin, Star, Trophy, Edit2, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { auth, googleProvider, signInWithPopup } from '../../firebase';
 import type { Event } from '../types/event';
 import { EventCard } from './EventCard';
 import { Button } from './ui/button';
@@ -58,6 +59,48 @@ export function ProfileView({
     city: userData?.city || '',
     avatar: userData?.avatar || '',
   });
+
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+  const [deleteMode, setDeleteMode] = useState<'password' | 'google'>('password');
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirm !== 'ELIMINA') return;
+    setDeleteBusy(true);
+    setDeleteError('');
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('Sessione scaduta: accedi nuovamente.');
+      let body: { password?: string; firebase_id_token?: string };
+      if (deleteMode === 'google') {
+        // Il popup impone una nuova autenticazione; il backend controlla auth_time <= 5 min.
+        const credential = await signInWithPopup(auth, googleProvider);
+        if (credential.user.email?.toLowerCase() !== userData.email.toLowerCase()) {
+          throw new Error('Devi autenticarti con lo stesso account Google di Flode.');
+        }
+        body = { firebase_id_token: await credential.user.getIdToken(true) };
+      } else {
+        if (!deletePassword) throw new Error('Inserisci la password.');
+        body = { password: deletePassword };
+      }
+      const response = await fetch('https://backandparty-production.up.railway.app/users/me', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.detail || 'Richiesta non riuscita.');
+      setShowDeleteAccount(false);
+      onLogout();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Errore durante la richiesta.');
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
 
   const [passwordForm, setPasswordForm] = useState({
     old_password: '',
@@ -569,6 +612,55 @@ export function ProfileView({
                 </Button>
               </div>
             </div>
+
+             <div className="bg-white rounded-2xl p-6 shadow-sm">
+               <h3 className="text-lg font-bold text-gray-900 mb-3">Informazioni legali</h3>
+               <p className="text-sm text-gray-500 mb-4">Documenti e regole di utilizzo di Flode.</p>
+               <div className="space-y-2">
+                 {[
+                   { href: '/privacy', label: 'Privacy Policy' },
+                   { href: '/termini', label: 'Termini e condizioni' },
+                   { href: '/community-rules', label: 'Regolamento Community' },
+                   { href: '/cookie-policy', label: 'Cookie Policy' },
+                 ].map(({ href, label }) => (
+                   <a key={href} href={href} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 text-sm font-medium text-gray-800 hover:bg-cyan-50 hover:text-cyan-700">
+                     <span>{label}</span><span aria-hidden="true">›</span>
+                   </a>
+                 ))}
+               </div>
+               <a href="mailto:privacy@flodeapp.it" className="mt-4 block text-sm text-cyan-700">Contatta privacy@flodeapp.it</a>
+             </div>
+
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-red-100">
+              <h3 className="text-lg font-bold text-red-700 mb-2">Elimina account</h3>
+              <p className="text-sm text-gray-600 mb-4">Richiedi la cancellazione definitiva del tuo account e dei dati personali. I locali e gli eventi pubblicati resteranno visibili senza il tuo account.</p>
+              <Button type="button" onClick={() => { setShowDeleteAccount(true); setDeleteError(''); }} variant="outline" className="w-full border-red-300 text-red-700 hover:bg-red-50">
+                <Trash2 className="w-4 h-4 mr-2" /> Elimina il mio account
+              </Button>
+              {showDeleteAccount && (
+                <div className="mt-4 p-4 rounded-xl bg-red-50 space-y-3">
+                  <p className="font-semibold text-red-800">Conferma eliminazione account</p>
+                  <p className="text-sm text-red-800">Questa operazione non è reversibile. Dopo la conferma non potrai più accedere a Flode; la cancellazione definitiva verrà elaborata dal sistema.</p>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setDeleteMode('password')} className={`px-3 py-2 rounded-lg text-sm ${deleteMode === 'password' ? 'bg-red-700 text-white' : 'bg-white text-gray-700'}`}>Email e password</button>
+                    <button type="button" onClick={() => setDeleteMode('google')} className={`px-3 py-2 rounded-lg text-sm ${deleteMode === 'google' ? 'bg-red-700 text-white' : 'bg-white text-gray-700'}`}>Google</button>
+                  </div>
+                  {deleteMode === 'password' ? (
+                    <Input type="password" autoComplete="current-password" placeholder="Conferma la tua password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} />
+                  ) : (
+                    <p className="text-sm text-gray-700">Si aprirà Google per confermare la tua identità.</p>
+                  )}
+                  <label className="block text-sm text-gray-700">Scrivi <strong>ELIMINA</strong> per confermare</label>
+                  <Input value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} placeholder="ELIMINA" autoComplete="off" />
+                  {deleteError && <p role="alert" className="text-sm text-red-700">{deleteError}</p>}
+                  <div className="flex gap-2">
+                    <Button type="button" variant="outline" disabled={deleteBusy} onClick={() => setShowDeleteAccount(false)} className="flex-1">Annulla</Button>
+                    <Button type="button" disabled={deleteBusy || deleteConfirm !== 'ELIMINA' || (deleteMode === 'password' && !deletePassword)} onClick={handleDeleteAccount} className="flex-1 bg-red-700 hover:bg-red-800 text-white">{deleteBusy ? 'Invio...' : 'Conferma eliminazione'}</Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
 
             <Button onClick={onLogout} variant="outline" className="w-full h-12 rounded-xl border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300">
               <LogOut className="w-5 h-5 mr-2" />

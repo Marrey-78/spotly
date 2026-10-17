@@ -148,7 +148,7 @@ export function EventsList({ events, favorites, onToggleFavorite, onEventClick, 
               <select
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="  flex-1  px-3 py-2  bg-[#111B2E]  border border-white/10  rounded-xl  text-sm text-slate-300  outline-none  focus:border-cyan-400/60">
+                className="  flex-1  px-3 py-2  bg-[#111B2E]  border border-white/10  rounded-xl  text-sm text-cyan-400  outline-none  focus:border-cyan-400/60">
                 <option value="">Tutte le date</option>
                 {uniqueDates.map(date => {
                   const dateObj = new Date(date + 'T00:00:00');

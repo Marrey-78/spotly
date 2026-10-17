@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { LegalPage, legalDocuments, type LegalSlug } from './app/components/legal/LegalPage';
 import { CommunityView, type CommunityChatSummary } from './app/components/CommunityView';
 import { EventChat } from './app/components/EventChat';
 import { DateSelector } from './app/components/DateSelector';
@@ -27,6 +28,27 @@ interface UserData {
 }
 
 export default function App() {
+  // La pagina di recupero deve essere accessibile anche senza login.
+  // Non eseguire un return prima degli hook: manteniamo stabile il loro ordine.
+  const legalSlugFromPath = (): LegalSlug | null => {
+    const slug = window.location.pathname.replace(/^\/+|\/+$/g, '');
+    return legalDocuments.find((doc) => doc.slug === slug)?.slug ?? null;
+  };
+  const [legalSlug, setLegalSlug] = useState<LegalSlug | null>(legalSlugFromPath);
+  useEffect(() => {
+    const handlePopState = () => setLegalSlug(legalSlugFromPath());
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+  const openLegal = (slug: LegalSlug) => {
+    window.history.pushState({}, '', `/${slug}`);
+    setLegalSlug(slug);
+  };
+  const closeLegal = () => {
+    window.history.pushState({}, '', '/');
+    setLegalSlug(null);
+  };
+
   // Set today's date as default
   const getTodayString = () => {
     const today = new Date();
@@ -544,6 +566,10 @@ const openCommunityChat = (chat: CommunityChatSummary) => {
           <AdminView />
         )}
       </div>
+
+      {legalSlug && (
+        <LegalPage slug={legalSlug} onClose={closeLegal} onNavigate={openLegal} />
+      )}
 
       {/* Bottom Navigation */}
       <BottomNav

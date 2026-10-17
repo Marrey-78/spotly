@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, signOut, updateProfile } from 'firebase/auth';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import flodeLogo from '../../assets/flode-bianco-trasparente.png';
 import {Eye,EyeOff,Lock, Mail, User, ArrowRight, MapPin, CalendarDays, Users, X,} from 'lucide-react';
 
 import {
   loginUser,
-  registerUser,
   loginWithFirebase,
   preparePasswordReset,
 } from '../api/auth';
@@ -34,6 +33,7 @@ export function LoginView({ onLogin, onClose }: LoginViewProps) {
   const [password, setPassword] = useState('');
 
   const [hasVenue, setHasVenue] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -58,31 +58,34 @@ export function LoginView({ onLogin, onClose }: LoginViewProps) {
     setLoading(true);
 
     try {
-      // Firebase first: required after a password reset.
+      // Fallback legacy SOLO se le credenziali non esistono su Firebase.
+      // Non mascherare errori di rete, verifica email o backend.
+      let firebaseCredential;
       try {
-        const credential = await signInWithEmailAndPassword(
-          auth,
-          email.trim(),
-          password
-        );
+        firebaseCredential = await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+      } catch (firebaseError: any) {
+        if (!['auth/invalid-credential', 'auth/user-not-found', 'auth/wrong-password'].includes(firebaseError?.code)) {
+          throw firebaseError;
+        }
+      }
 
-        const idToken = await credential.user.getIdToken();
+      if (firebaseCredential) {
+        if (!firebaseCredential.user.emailVerified) {
+          await sendEmailVerification(firebaseCredential.user);
+          await signOut(auth);
+          setError('Controlla la tua email: ti abbiamo inviato il link di verifica. Dopo aver verificato, accedi nuovamente.');
+          return;
+        }
+        const idToken = await firebaseCredential.user.getIdToken(true);
         const result = await loginWithFirebase(idToken);
-
         localStorage.setItem('token', result.token);
         localStorage.setItem('userData', JSON.stringify(result.user));
         onLogin(result.user);
         return;
-      } catch (firebaseError) {
-        console.info('Provo il login legacy Flode.', firebaseError);
       }
 
-      // Old accounts continue to work with the PostgreSQL bcrypt password.
-      const result = await loginUser({
-        email,
-        password,
-      });
-
+      // Account tradizionali PostgreSQL.
+      const result = await loginUser({ email: email.trim().toLowerCase(), password });
       localStorage.setItem('token', result.token);
       localStorage.setItem('userData', JSON.stringify(result.user));
       onLogin(result.user);
@@ -108,29 +111,22 @@ export function LoginView({ onLogin, onClose }: LoginViewProps) {
 
     e.preventDefault();
 
+    if (!acceptedTerms) {
+      setError('Per registrarti devi accettare i Termini di servizio.');
+      return;
+    }
+
     setError('');
     setLoading(true);
 
     try {
 
-      const result = await registerUser({
-        name,
-        email,
-        password,
-        hasVenue,
-      });
-
-      localStorage.setItem(
-        'token',
-        result.token
-      );
-
-      localStorage.setItem(
-        'userData',
-        JSON.stringify(result.user)
-      );
-
-      onLogin(result.user);
+      const credential = await createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+      await updateProfile(credential.user, { displayName: name.trim() });
+      await sendEmailVerification(credential.user);
+      await signOut(auth);
+      setResetSuccess('Account Firebase creato. Controlla la tua email e conferma l’indirizzo prima di effettuare il login.');
+      setIsRegistering(false);
 
     } catch (error) {
 
@@ -172,6 +168,7 @@ export function LoginView({ onLogin, onClose }: LoginViewProps) {
     setLoading(true);
 
     try {
+      await preparePasswordReset(normalizedEmail);
       await sendPasswordResetEmail(auth, normalizedEmail);
       setResetSuccess(
         'Se esiste un account associato a questa email, riceverai un link per reimpostare la password.'
@@ -1063,6 +1060,27 @@ const handleFacebookLogin = async () => {
                 )}
 
 
+                {/* ACCETTAZIONE TERMINI - SOLO REGISTRAZIONE */}
+                {isRegistering && !isResettingPassword && (
+                  <label className="mt-5 flex items-start gap-3 cursor-pointer rounded-xl border border-white/[0.08] bg-white/[0.035] p-4">
+                    <input
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={(e) => {
+                        setAcceptedTerms(e.target.checked);
+                        if (e.target.checked) setError('');
+                      }}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-cyan-400 cursor-pointer"
+                    />
+                    <span className="text-xs leading-relaxed text-white/70">
+                      Accetto i{' '}
+                      <a href="/termini" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2">Termini di servizio</a>
+                      {' '}e dichiaro di aver preso visione della{' '}
+                      <a href="/privacy" target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-cyan-400 hover:text-cyan-300 underline underline-offset-2">Privacy Policy</a>.
+                    </span>
+                  </label>
+                )}
+
                 {/* MAIN BUTTON */}
 
                 <button
@@ -1296,39 +1314,11 @@ const handleFacebookLogin = async () => {
 
               {/* FOOTER */}
 
-              <p
-                className="
-                  text-center
-                  text-[11px]
-                  leading-relaxed
-                  text-white/30
-                  mt-7
-                "
-              >
-                Continuando accetti i nostri{' '}
-
-                <button
-                  type="button"
-                  className="
-                    text-cyan-400
-                    hover:text-cyan-300
-                  "
-                >
-                  Termini di servizio
-                </button>
-
+              <p className="text-center text-[11px] leading-relaxed text-white/45 mt-7">
+                Consulta i nostri{' '}
+                <a href="/termini" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300">Termini di servizio</a>
                 {' '}e la{' '}
-
-                <button
-                  type="button"
-                  className="
-                    text-cyan-400
-                    hover:text-cyan-300
-                  "
-                >
-                  Privacy Policy
-                </button>
-
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300">Privacy Policy</a>.
               </p>
 
             </div>

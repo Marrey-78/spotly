@@ -37,7 +37,7 @@ export async function loginUser(data: {
   return response.json();
 }
 
-export async function loginWithFirebase(idToken: string) {
+export async function loginWithFirebase(idToken: string, hasVenue = false) {
   const response = await fetch(`${API_URL}/auth/firebase`, {
     method: 'POST',
     headers: {
@@ -45,6 +45,7 @@ export async function loginWithFirebase(idToken: string) {
     },
     body: JSON.stringify({
       id_token: idToken,
+      hasVenue,
     }),
   });
 
